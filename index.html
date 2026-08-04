@@ -4,12 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ana IDOS</title>
+
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>Ana IDOS</h1>
+<header>
+    🚍 Ana IDOS
+</header>
 
-<p>První verze webu je úspěšně vytvořena! 🎉</p>
+<div class="container">
+
+<h2>Vyhledání spojení</h2>
+
+<label>Odkud</label>
+<select id="from">
+    <option>Anské náměstí</option>
+    <option>NC Ana</option>
+    <option>Záhoří</option>
+    <option>Šeřífova</option>
+</select>
+
+<label>Kam</label>
+<select id="to">
+    <option>NC Ana</option>
+    <option>Anské náměstí</option>
+    <option>Záhoří</option>
+    <option>Šeřífova</option>
+</select>
+
+<label>Čas odjezdu</label>
+<input type="time" id="time">
+
+<button onclick="searchConnection()">
+Vyhledat spojení
+</button>
+
+<div id="results">
+
+</div>
+
+</div>
+
+<script src="script.js"></script>
 
 </body>
 </html>
