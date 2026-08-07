@@ -1,0 +1,25 @@
+[
+  {
+    "line": "1",
+    "type": "bus",
+    "direction": "NC Ana",
+    "stops": [
+      "Anské náměstí",
+      "NC Ana"
+    ],
+    "departures": [
+      {
+        "times": {
+          "Anské náměstí": "15:04",
+          "NC Ana": "15:34"
+        }
+      },
+      {
+        "times": {
+          "Anské náměstí": "15:14",
+          "NC Ana": "15:44"
+        }
+      }
+    ]
+  }
+]
