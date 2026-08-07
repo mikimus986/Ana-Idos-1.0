@@ -1,67 +1,191 @@
-// Seznam zastávek (zatím ručně, později se bude načítat z JSON)
-const stops = [
-    "Anské náměstí",
-    "Lamov, u baru",
-    "Šerifova",
-    "Záhoří",
-    "Zoo-jih",
-    "Kolombus",
-    "Přístav",
-    "U lesa",
-    "Nové nádraží",
-    "Zoo",
-    "Letiště Ana",
-    "Palčák",
-    "Nový Lízátkov, nádraží",
-    "Nemocnice",
-    "Obchodní",
-    "Emplinův park",
-    "Ansko, nádraží",
-    "Nádraží Pralesov",
-    "Pilníkov, železniční stanice",
-    "Snovín",
-    "Starý Lízátkov, nádraží"
-];
+// ===============================
+// ANA IDOS - app.js
+// ===============================
 
-// Naplnění našeptávače zastávek
-const datalist = document.getElementById("stops");
+// Nastavení dnešního data a času
+window.addEventListener("load", () => {
 
-stops.forEach(stop => {
-    const option = document.createElement("option");
-    option.value = stop;
-    datalist.appendChild(option);
+    const now = new Date();
+
+    document.getElementById("date").value =
+        now.toISOString().split("T")[0];
+
+    document.getElementById("time").value =
+        now.toTimeString().slice(0,5);
+
 });
 
-// Nastavení dnešního data
-const today = new Date().toISOString().split("T")[0];
-document.getElementById("date").value = today;
+// ===============================
+// Prohození zastávek
+// ===============================
 
-// Tlačítko pro prohození zastávek
 document.getElementById("swapButton").addEventListener("click", () => {
+
     const from = document.getElementById("from");
     const to = document.getElementById("to");
 
     const temp = from.value;
+
     from.value = to.value;
     to.value = temp;
+
 });
 
-// Tlačítko Hledat
+// ===============================
+// Vyhledávání
+// ===============================
+
 document.getElementById("searchButton").addEventListener("click", () => {
 
-    const from = document.getElementById("from").value;
-    const to = document.getElementById("to").value;
+    const from = document.getElementById("from").value.trim();
+    const to = document.getElementById("to").value.trim();
     const time = document.getElementById("time").value;
 
-    const results = document.getElementById("results");
+    if(from === ""){
 
-    results.innerHTML = `
-        <div class="resultCard">
-            <div class="departureTime">${time || "--:--"}</div>
+        alert("Vyplň zastávku Odkud.");
+
+        return;
+
+    }
+
+    if(to === ""){
+
+        alert("Vyplň zastávku Kam.");
+
+        return;
+
+    }
+
+    if(from === to){
+
+        alert("Zastávky jsou stejné.");
+
+        return;
+
+    }
+
+    const results = findConnections(from,to,time);
+
+    showResults(results,from,to);
+
+});
+
+// ===============================
+// Zobrazení výsledků
+// ===============================
+
+function showResults(results,from,to){
+
+    const container = document.getElementById("results");
+
+    container.innerHTML = "";
+
+    if(results.length === 0){
+
+        container.innerHTML =
+
+        `<div class="resultCard">
+
+            <h2>Žádné spojení nebylo nalezeno.</h2>
+
+        </div>`;
+
+        return;
+
+    }
+
+    results.forEach(connection=>{
+
+        const color = getVehicleColor(connection.type);
+
+        const icon = getVehicleIcon(connection.type);
+
+        const card = document.createElement("div");
+
+        card.className = "resultCard";
+
+        card.innerHTML =
+
+        `
+        <div class="departureTime">
+
+            ${connection.departure}
+
+        </div>
+
+        <div class="lineRow">
+
+            <span
+                class="lineBadge"
+                style="background:${color};">
+
+                ${icon}
+                ${connection.line}
+
+            </span>
+
+            <span class="direction">
+
+                ${connection.direction}
+
+            </span>
+
+        </div>
+
+        <div class="times">
 
             <div>
-                Vyhledávání z <b>${from}</b> do <b>${to}</b> bude dostupné v další části projektu.
+
+                <strong>Odjezd</strong><br>
+
+                ${from}<br>
+
+                ${connection.departure}
+
             </div>
+
+            <div>
+
+                <strong>Příjezd</strong><br>
+
+                ${to}<br>
+
+                ${connection.arrival}
+
+            </div>
+
         </div>
-    `;
+
+        `;
+
+        container.appendChild(card);
+
+    });
+
+}
+
+// ===============================
+// Enter = hledat
+// ===============================
+
+document.getElementById("from").addEventListener("keydown",function(e){
+
+    if(e.key==="Enter")
+        document.getElementById("searchButton").click();
+
+});
+
+document.getElementById("to").addEventListener("keydown",function(e){
+
+    if(e.key==="Enter")
+        document.getElementById("searchButton").click();
+
+});
+
+document.getElementById("time").addEventListener("keydown",function(e){
+
+    if(e.key==="Enter")
+        document.getElementById("searchButton").click();
+
 });
