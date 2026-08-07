@@ -1,54 +1,187 @@
-body {
+* {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background: #eef2f5;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-header {
-    background: #0057b8;
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f2f4f7;
+    color: #222;
+}
+
+.topbar {
+    background: #0066cc;
     color: white;
-    padding: 15px;
+    padding: 18px;
+    text-align: center;
     font-size: 28px;
     font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
 }
 
 .container {
-    max-width: 700px;
-    margin: 30px auto;
+    max-width: 900px;
+    margin: 25px auto;
+    padding: 15px;
+}
+
+.searchBox {
     background: white;
+    border-radius: 14px;
     padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,.12);
 }
 
 label {
     display: block;
     margin-top: 15px;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
+    font-weight: bold;
 }
 
-select, input {
+input,
+select {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #0066cc;
+}
+
+.swapBox {
+    display: flex;
+    justify-content: center;
+    margin: 18px 0;
+}
+
+#swapButton {
+    background: #f0f0f0;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    cursor: pointer;
     font-size: 16px;
 }
 
-button {
+#swapButton:hover {
+    background: #dddddd;
+}
+
+.mode {
+    display: flex;
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.mode label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: normal;
+}
+
+.mode input {
+    width: auto;
+}
+
+#searchButton {
     width: 100%;
-    margin-top: 20px;
-    padding: 12px;
-    font-size: 18px;
-    background: #0057b8;
+    margin-top: 25px;
+    background: #0066cc;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 18px;
     cursor: pointer;
 }
 
-button:hover {
-    background: #00408a;
+#searchButton:hover {
+    background: #0052a3;
 }
 
 #results {
-    margin-top: 20px;
+    margin-top: 25px;
+}
+
+.resultCard {
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+}
+
+.departureTime {
+    font-size: 26px;
+    font-weight: bold;
+    color: #0066cc;
+    margin-bottom: 12px;
+}
+
+.lineBadge {
+    display: inline-block;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.bus {
+    background: #1976d2;
+}
+
+.trolleybus {
+    background: #2e7d32;
+}
+
+.tram {
+    background: #d32f2f;
+}
+
+.train {
+    background: #ef6c00;
+}
+
+.direction {
+    font-weight: bold;
+    font-size: 17px;
+}
+
+.stopRow {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 16px;
+}
+
+.transfer {
+    margin: 14px 0;
+    text-align: center;
+    color: #666;
+    font-weight: bold;
+}
+
+@media (max-width: 700px) {
+
+    .container {
+        padding: 10px;
+    }
+
+    .topbar {
+        font-size: 22px;
+    }
+
+    .departureTime {
+        font-size: 22px;
+    }
+
 }
