@@ -7,46 +7,63 @@
 
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<header>
-    🚍 Ana IDOS
+<header class="topbar">
+    <h1>Ana IDOS</h1>
 </header>
 
-<div class="container">
+<main class="container">
 
-<h2>Vyhledání spojení</h2>
+<div class="searchBox">
 
 <label>Odkud</label>
-<select id="from">
-    <option>Anské náměstí</option>
-    <option>NC Ana</option>
-    <option>Záhoří</option>
-    <option>Šeřífova</option>
-</select>
+<input list="stops" id="from" placeholder="Začněte psát zastávku...">
 
 <label>Kam</label>
-<select id="to">
-    <option>NC Ana</option>
-    <option>Anské náměstí</option>
-    <option>Záhoří</option>
-    <option>Šeřífova</option>
-</select>
+<input list="stops" id="to" placeholder="Začněte psát zastávku...">
 
-<label>Čas odjezdu</label>
+<datalist id="stops">
+</datalist>
+
+<div class="swapBox">
+<button id="swapButton">⇅ Prohodit</button>
+</div>
+
+<label>Datum</label>
+<input type="date" id="date">
+
+<label>Čas</label>
 <input type="time" id="time">
 
-<button onclick="searchConnection()">
+<div class="mode">
+
+<label>
+<input type="radio" name="mode" value="departure" checked>
+Odjezdy
+</label>
+
+<label>
+<input type="radio" name="mode" value="arrival">
+Příjezdy
+</label>
+
+</div>
+
+<button id="searchButton">
 Vyhledat spojení
 </button>
+
+</div>
 
 <div id="results">
 
 </div>
 
-</div>
+</main>
 
-<script src="script.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>
