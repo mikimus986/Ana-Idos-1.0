@@ -3,45 +3,60 @@
 // ===============================
 
 let allStops = [];
+let allRoutes = [];
 let allLines = [];
 
-// Sem přidávej nové linky
-const timetableFiles = [
-    "data/timetables/1.json",
-    "data/timetables/2.json",
-    "data/timetables/25.json",
-    "data/timetables/26.json",
-    "data/timetables/27.json",
-    "data/timetables/77.json",
-    "data/timetables/112.json",
-    "data/timetables/113.json",
-    "data/timetables/S1.json",
-    "data/timetables/S2.json"
-];
+// ===============================
+// Načtení routes.json
+// ===============================
+
+async function loadRoutes() {
+
+    const response = await fetch("data/routes.json");
+
+    if (!response.ok) {
+        console.error("Nepodařilo se načíst routes.json");
+        return;
+    }
+
+    allRoutes = await response.json();
+
+}
 
 // ===============================
-// Načtení zastávek
+// Načtení stops.json
 // ===============================
 
 async function loadStops() {
 
     const response = await fetch("data/stops.json");
+
+    if (!response.ok) {
+        console.error("Nepodařilo se načíst stops.json");
+        return;
+    }
+
     allStops = await response.json();
 
-    const list = document.getElementById("stops");
-    list.innerHTML = "";
+    const datalist = document.getElementById("stops");
+
+    datalist.innerHTML = "";
 
     allStops.forEach(stop => {
 
         const option = document.createElement("option");
 
         if (typeof stop === "string") {
+
             option.value = stop;
+
         } else {
+
             option.value = stop.name;
+
         }
 
-        list.appendChild(option);
+        datalist.appendChild(option);
 
     });
 
@@ -55,24 +70,29 @@ async function loadTimetables() {
 
     allLines = [];
 
-    for (const file of timetableFiles) {
+    for (const route of allRoutes) {
 
         try {
 
-            const response = await fetch(file);
+            const response = await fetch(
+                "data/timetables/" + route.file
+            );
 
             if (!response.ok)
                 continue;
 
-            const json = await response.json();
+            const timetable = await response.json();
 
-            allLines.push(json);
+            timetable.type = route.type;
+            timetable.line = route.line;
+
+            allLines.push(timetable);
 
         }
 
-        catch {
+        catch(error){
 
-            console.log(file + " nenalezen.");
+            console.log("Nepodařilo se načíst", route.file);
 
         }
 
@@ -86,103 +106,31 @@ async function loadTimetables() {
 // Převod času
 // ===============================
 
-function timeToMinutes(time) {
+function timeToMinutes(time){
+
+    if(!time)
+        return -1;
 
     const parts = time.split(":");
 
-    return Number(parts[0]) * 60 + Number(parts[1]);
+    return Number(parts[0])*60 + Number(parts[1]);
 
 }
 
 // ===============================
-// Vyhledávání přímých spojů
-// ===============================
-
-function findConnections(from, to, afterTime) {
-
-    const results = [];
-
-    const after = timeToMinutes(afterTime);
-
-    allLines.forEach(line => {
-
-        line.directions.forEach(direction => {
-
-            const fromIndex = direction.stops.indexOf(from);
-            const toIndex = direction.stops.indexOf(to);
-
-            if (fromIndex === -1)
-                return;
-
-            if (toIndex === -1)
-                return;
-
-            if (fromIndex >= toIndex)
-                return;
-
-            direction.trips.forEach(trip => {
-
-                const departure = trip[fromIndex];
-                const arrival = trip[toIndex];
-
-                if (!departure || !arrival)
-                    return;
-
-                if (timeToMinutes(departure) < after)
-                    return;
-
-                results.push({
-
-                    line: line.line,
-
-                    type: line.type,
-
-                    direction: direction.name,
-
-                    departure: departure,
-
-                    arrival: arrival
-
-                });
-
-            });
-
-        });
-
-    });
-
-    results.sort(function(a, b){
-
-        return timeToMinutes(a.departure) - timeToMinutes(b.departure);
-
-    });
-
-    return results;
-
-}
-
-// ===============================
-// Ikony dopravy
+// Ikony
 // ===============================
 
 function getVehicleIcon(type){
 
     switch(type){
 
-        case 1:
-            return "🚌";
+        case 1: return "🚌";
+        case 2: return "🚎";
+        case 3: return "🚋";
+        case 4: return "🚆";
 
-        case 2:
-            return "🚎";
-
-        case 3:
-            return "🚋";
-
-        case 4:
-            return "🚆";
-
-        default:
-            return "❓";
+        default: return "❓";
 
     }
 
@@ -196,30 +144,87 @@ function getVehicleColor(type){
 
     switch(type){
 
-        case 1:
-            return "#2196F3";
+        case 1: return "#2196F3";
+        case 2: return "#4CAF50";
+        case 3: return "#E53935";
+        case 4: return "#FF9800";
 
-        case 2:
-            return "#4CAF50";
-
-        case 3:
-            return "#E53935";
-
-        case 4:
-            return "#FF9800";
-
-        default:
-            return "#777777";
+        default: return "#777";
 
     }
 
 }
+// ===============================
+// Vyhledávání spojů
+// ===============================
+
+function findConnections(from, to, afterTime) {
+
+    const results = [];
+
+    const after = timeToMinutes(afterTime);
+
+    allLines.forEach(line => {
+
+        if (!line.directions) return;
+
+        line.directions.forEach(direction => {
+
+            const fromIndex = direction.stops.indexOf(from);
+            const toIndex = direction.stops.indexOf(to);
+
+            if (fromIndex === -1) return;
+            if (toIndex === -1) return;
+            if (fromIndex >= toIndex) return;
+
+            direction.trips.forEach(trip => {
+
+                const departure = trip[fromIndex];
+                const arrival = trip[toIndex];
+
+                if (!departure || !arrival) return;
+
+                if (timeToMinutes(departure) < after) return;
+
+                results.push({
+
+                    line: line.line,
+                    type: line.type,
+                    direction: direction.name,
+
+                    from: from,
+                    to: to,
+
+                    departure: departure,
+                    arrival: arrival,
+
+                    departureMinutes: timeToMinutes(departure)
+
+                });
+
+            });
+
+        });
+
+    });
+
+    results.sort((a, b) => {
+
+        return a.departureMinutes - b.departureMinutes;
+
+    });
+
+    return results;
+
+}
 
 // ===============================
-// Načtení po otevření stránky
+// Načtení aplikace
 // ===============================
 
-window.addEventListener("load", async () => {
+async function initializeAnaIDOS() {
+
+    await loadRoutes();
 
     await loadStops();
 
@@ -227,4 +232,6 @@ window.addEventListener("load", async () => {
 
     console.log("Ana IDOS připraven.");
 
-});
+}
+
+window.addEventListener("load", initializeAnaIDOS);
