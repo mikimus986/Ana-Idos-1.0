@@ -1,9 +1,26 @@
 // Seznam zastávek (zatím ručně, později se bude načítat z JSON)
 const stops = [
     "Anské náměstí",
-    "NC Ana",
+    "Lamov, u baru",
     "Šerifova",
-    "Záhoří"
+    "Záhoří",
+    "Zoo-jih",
+    "Kolombus",
+    "Přístav",
+    "U lesa",
+    "Nové nádraží",
+    "Zoo",
+    "Letiště Ana",
+    "Palčák",
+    "Nový Lízátkov, nádraží",
+    "Nemocnice",
+    "Obchodní",
+    "Emplinův park",
+    "Ansko, nádraží",
+    "Nádraží Pralesov",
+    "Pilníkov, železniční stanice",
+    "Snovín",
+    "Starý Lízátkov, nádraží"
 ];
 
 // Naplnění našeptávače zastávek
