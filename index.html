@@ -16,53 +16,87 @@
 
 <main class="container">
 
-<div class="searchBox">
+    <div class="searchBox">
 
-<label>Odkud</label>
-<input list="stops" id="from" placeholder="Začněte psát zastávku...">
+        <label for="from">Odkud</label>
+        <input
+            id="from"
+            list="stops"
+            placeholder="Např. Anské náměstí"
+            autocomplete="off"
+        >
 
-<label>Kam</label>
-<input list="stops" id="to" placeholder="Začněte psát zastávku...">
+        <label for="to">Kam</label>
+        <input
+            id="to"
+            list="stops"
+            placeholder="Např. NC Ana"
+            autocomplete="off"
+        >
 
-<datalist id="stops">
-</datalist>
+        <datalist id="stops"></datalist>
 
-<div class="swapBox">
-<button id="swapButton">⇅ Prohodit</button>
-</div>
+        <div class="swapBox">
+            <button id="swapButton">
+                ⇅ Prohodit zastávky
+            </button>
+        </div>
 
-<label>Datum</label>
-<input type="date" id="date">
+        <label for="date">Datum</label>
+        <input type="date" id="date">
 
-<label>Čas</label>
-<input type="time" id="time">
+        <label for="time">Čas</label>
+        <input type="time" id="time">
 
-<div class="mode">
+        <div class="mode">
 
-<label>
-<input type="radio" name="mode" value="departure" checked>
-Odjezdy
-</label>
+            <label>
+                <input
+                    type="radio"
+                    name="mode"
+                    value="departure"
+                    checked
+                >
+                Odjezdy
+            </label>
 
-<label>
-<input type="radio" name="mode" value="arrival">
-Příjezdy
-</label>
+            <label>
+                <input
+                    type="radio"
+                    name="mode"
+                    value="arrival"
+                >
+                Příjezdy
+            </label>
 
-</div>
+        </div>
 
-<button id="searchButton">
-Vyhledat spojení
-</button>
+        <button id="searchButton">
+            Vyhledat spojení
+        </button>
 
-</div>
+    </div>
 
-<div id="results">
+    <div id="results">
 
-</div>
+        <div class="resultCard">
+
+            <div class="departureTime">
+                Připraveno
+            </div>
+
+            <p>
+                Zadejte výchozí a cílovou zastávku a klikněte na
+                <strong>Vyhledat spojení</strong>.
+            </p>
+
+        </div>
+
+    </div>
 
 </main>
 
+<script src="search.js"></script>
 <script src="app.js"></script>
 
 </body>
