@@ -1,1 +1,34 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import jízdního řádu - Ana IDOS</title>
 
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.min.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Import jízdního řádu</h1>
+
+    <input type="file" id="pdfFile" accept=".pdf">
+
+    <br><br>
+
+    <button id="convertButton">
+        Převést PDF
+    </button>
+
+    <pre id="output"></pre>
+
+</div>
+
+<script src="import/import.js"></script>
+
+</body>
+</html>
