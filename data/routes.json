@@ -1,12 +1,61 @@
 [
-  {
-    "line": "1",
-    "directionA": "Lamov, u baru",
-    "directionB": "Anské náměstí"
-  },
-  {
-    "line": "25",
-    "directionA": "Zoo-jih",
-    "directionB": "Záhoří"
-  }
+  { "line": "1", "file": "1.json", "type": 1 },
+  { "line": "2", "file": "2.json", "type": 1 },
+  { "line": "3", "file": "3.json", "type": 1 },
+  { "line": "4", "file": "4.json", "type": 1 },
+  { "line": "5", "file": "5.json", "type": 3 },
+  { "line": "6", "file": "6.json", "type": 3 },
+  { "line": "7", "file": "7.json", "type": 3 },
+  { "line": "8", "file": "8.json", "type": 1 },
+  { "line": "9", "file": "9.json", "type": 1 },
+  { "line": "10", "file": "10.json", "type": 3 },
+  { "line": "11", "file": "11.json", "type": 3 },
+  { "line": "12", "file": "12.json", "type": 3 },
+  { "line": "13", "file": "13.json", "type": 1 },
+  { "line": "14", "file": "14.json", "type": 1 },
+  { "line": "15", "file": "15.json", "type": 3 },
+
+  { "line": "17", "file": "17.json", "type": 3 },
+  { "line": "19", "file": "19.json", "type": 1 },
+
+  { "line": "21", "file": "21.json", "type": 1 },
+  { "line": "22", "file": "22.json", "type": 1 },
+  { "line": "23", "file": "23.json", "type": 1 },
+
+  { "line": "25", "file": "25.json", "type": 2 },
+  { "line": "26", "file": "26.json", "type": 2 },
+  { "line": "27", "file": "27.json", "type": 2 },
+
+  { "line": "30", "file": "30.json", "type": 2 },
+  { "line": "31", "file": "31.json", "type": 2 },
+  { "line": "32", "file": "32.json", "type": 2 },
+  { "line": "33", "file": "33.json", "type": 2 },
+  { "line": "34", "file": "34.json", "type": 2 },
+  { "line": "35", "file": "35.json", "type": 2 },
+
+  { "line": "37", "file": "37.json", "type": 2 },
+  { "line": "38", "file": "38.json", "type": 2 },
+
+  { "line": "40", "file": "40.json", "type": 1 },
+
+  { "line": "44", "file": "44.json", "type": 1 },
+
+  { "line": "51", "file": "51.json", "type": 1 },
+  { "line": "52", "file": "52.json", "type": 1 },
+  { "line": "53", "file": "53.json", "type": 1 },
+  { "line": "54", "file": "54.json", "type": 1 },
+  { "line": "55", "file": "55.json", "type": 1 },
+  { "line": "56", "file": "56.json", "type": 1 },
+
+  { "line": "63", "file": "63.json", "type": 1 },
+
+  { "line": "74", "file": "74.json", "type": 1 },
+  { "line": "76", "file": "76.json", "type": 1 },
+  { "line": "77", "file": "77.json", "type": 1 },
+
+  { "line": "112", "file": "112.json", "type": 1 },
+  { "line": "113", "file": "113.json", "type": 1 },
+
+  { "line": "S1", "file": "S1.json", "type": 4 },
+  { "line": "S2", "file": "S2.json", "type": 4 }
 ]
