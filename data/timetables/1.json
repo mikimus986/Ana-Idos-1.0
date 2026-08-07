@@ -1,1 +1,17 @@
-
+{
+  "line": "1",
+  "type": "bus",
+  "color": "bus",
+  "directions": [
+    {
+      "name": "Lamov, u baru",
+      "stops": [...],
+      "trips": [...]
+    },
+    {
+      "name": "Anské náměstí",
+      "stops": [...],
+      "trips": [...]
+    }
+  ]
+}
