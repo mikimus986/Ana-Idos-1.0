@@ -217,6 +217,68 @@ function findConnections(from, to, afterTime) {
     return results;
 
 }
+function findTransferConnections(from, to, afterTime) {
+
+    const direct = findConnections(from, to, afterTime);
+
+    let results = [...direct];
+
+    allStops.forEach(stop => {
+
+        const stopName =
+            typeof stop === "string" ? stop : stop.name;
+
+        if (stopName === from || stopName === to)
+            return;
+
+        const firstLeg =
+            findConnections(from, stopName, afterTime);
+
+        firstLeg.forEach(first => {
+
+            const secondLeg =
+                findConnections(
+                    stopName,
+                    to,
+                    first.arrival
+                );
+
+            secondLeg.forEach(second => {
+
+                if (
+                    timeToMinutes(second.departure) <
+                    timeToMinutes(first.arrival)
+                ) {
+                    return;
+                }
+
+                results.push({
+
+                    transfer: true,
+
+                    stop: stopName,
+
+                    first: first,
+
+                    second: second,
+
+                    departureMinutes:
+                        first.departureMinutes
+
+                });
+
+            });
+
+        });
+
+    });
+
+    results.sort((a, b) =>
+        a.departureMinutes - b.departureMinutes
+    );
+
+    return results;
+}
 
 // ===============================
 // Načtení aplikace
