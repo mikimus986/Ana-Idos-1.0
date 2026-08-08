@@ -4,181 +4,157 @@
 <head>
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Vyhledávač spojení</title>
+    <title>Vyhledávání spojení</title>
+
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <h1>Vyhledávač spojení</h1>
+    <div class="container">
+
+        <h1>Vyhledávání spojení</h1>
+
+        <div class="searchBox">
+
+            <div class="inputRow">
+
+                <div class="inputGroup">
+                    <label for="from">Odkud</label>
+
+                    <input
+                        id="from"
+                        type="text"
+                        list="stops"
+                        autocomplete="off"
+                        placeholder="Výchozí zastávka"
+                    >
+                </div>
 
 
-    <!-- ===================================== -->
-    <!-- VYHLEDÁVÁNÍ -->
-    <!-- ===================================== -->
-
-    <div class="searchBox">
-
-        <label for="from">
-            Odkud
-        </label>
-
-        <input
-            id="from"
-            type="text"
-            list="stops"
-            autocomplete="off"
-            placeholder="Výchozí zastávka"
-        >
+                <button
+                    id="swapButton"
+                    type="button"
+                    class="swapButton"
+                    title="Prohodit zastávky"
+                >
+                    ⇅
+                </button>
 
 
-        <label for="to">
-            Kam
-        </label>
+                <div class="inputGroup">
+                    <label for="to">Kam</label>
 
-        <input
-            id="to"
-            type="text"
-            list="stops"
-            autocomplete="off"
-            placeholder="Cílová zastávka"
-        >
+                    <input
+                        id="to"
+                        type="text"
+                        list="stops"
+                        autocomplete="off"
+                        placeholder="Cílová zastávka"
+                    >
+                </div>
 
-
-        <!-- Nabídka zastávek -->
-
-        <datalist id="stops"></datalist>
+            </div>
 
 
-        <!-- ================================= -->
-        <!-- PROHOZENÍ -->
-        <!-- ================================= -->
+            <datalist id="stops"></datalist>
 
-        <div class="swapBox">
+
+            <div class="optionsRow">
+
+                <div class="optionGroup">
+
+                    <label for="date">
+                        Datum
+                    </label>
+
+                    <input
+                        type="date"
+                        id="date"
+                    >
+
+                </div>
+
+
+                <div class="optionGroup">
+
+                    <label for="time">
+                        Čas
+                    </label>
+
+                    <input
+                        type="time"
+                        id="time"
+                        value="00:00"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="mode">
+
+                <label>
+                    <input
+                        type="radio"
+                        name="mode"
+                        value="departure"
+                        checked
+                    >
+
+                    Odjezdy
+                </label>
+
+
+                <label>
+                    <input
+                        type="radio"
+                        name="mode"
+                        value="arrival"
+                    >
+
+                    Příjezdy
+                </label>
+
+            </div>
+
 
             <button
-                id="swapButton"
+                id="searchButton"
                 type="button"
+                class="searchButton"
             >
-                ⇅ Prohodit zastávky
+                Vyhledat spojení
             </button>
 
         </div>
 
 
-        <!-- ================================= -->
-        <!-- DATUM -->
-        <!-- ================================= -->
+        <div id="results">
 
-        <label for="date">
-            Datum
-        </label>
+            <div class="resultCard">
 
-        <input
-            type="date"
-            id="date"
-        >
+                <div class="departureTime">
+                    Připraveno
+                </div>
 
+                <p>
+                    Zadejte výchozí a cílovou zastávku
+                    a klikněte na
+                    <strong>Vyhledat spojení</strong>.
+                </p>
 
-        <!-- ================================= -->
-        <!-- ČAS -->
-        <!-- ================================= -->
-
-        <label for="time">
-            Čas
-        </label>
-
-        <input
-            type="time"
-            id="time"
-            value="00:00"
-        >
-
-
-        <!-- ================================= -->
-        <!-- REŽIM -->
-        <!-- ================================= -->
-
-        <div class="mode">
-
-            <label>
-
-                <input
-                    type="radio"
-                    name="mode"
-                    value="departure"
-                    checked
-                >
-
-                Odjezdy
-
-            </label>
-
-
-            <label>
-
-                <input
-                    type="radio"
-                    name="mode"
-                    value="arrival"
-                >
-
-                Příjezdy
-
-            </label>
-
-        </div>
-
-
-        <!-- ================================= -->
-        <!-- VYHLEDAT -->
-        <!-- ================================= -->
-
-        <button
-            id="searchButton"
-            type="button"
-        >
-            Vyhledat spojení
-        </button>
-
-    </div>
-
-
-    <!-- ===================================== -->
-    <!-- VÝSLEDKY -->
-    <!-- ===================================== -->
-
-    <div id="results">
-
-        <div class="resultCard">
-
-            <div class="departureTime">
-                Připraveno
             </div>
 
-            <p>
-                Zadejte výchozí a cílovou zastávku
-                a klikněte na
-                <strong>
-                    Vyhledat spojení
-                </strong>.
-            </p>
-
         </div>
 
     </div>
 
 
-    <!-- ===================================== -->
-    <!-- JAVASCRIPT -->
-    <!-- ===================================== -->
-
     <script src="search.js"></script>
-
     <script src="app.js"></script>
 
 </body>
