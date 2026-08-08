@@ -2,16 +2,32 @@
 // ANA IDOS - app.js
 // ===============================
 
-// Nastavení dnešního data a času
+const fromInput = document.getElementById("from");
+const toInput = document.getElementById("to");
+const dateInput = document.getElementById("date");
+const timeInput = document.getElementById("time");
+const searchButton = document.getElementById("searchButton");
+const swapButton = document.getElementById("swapButton");
+const resultsContainer = document.getElementById("results");
+
+// ===============================
+// Aktuální datum a čas
+// ===============================
+
 window.addEventListener("load", () => {
 
     const now = new Date();
 
-    document.getElementById("date").value =
-        now.toISOString().split("T")[0];
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
 
-    document.getElementById("time").value =
-        now.toTimeString().slice(0,5);
+    dateInput.value = `${year}-${month}-${day}`;
+
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+
+    timeInput.value = `${hours}:${minutes}`;
 
 });
 
@@ -19,15 +35,12 @@ window.addEventListener("load", () => {
 // Prohození zastávek
 // ===============================
 
-document.getElementById("swapButton").addEventListener("click", () => {
+swapButton.addEventListener("click", () => {
 
-    const from = document.getElementById("from");
-    const to = document.getElementById("to");
+    const oldFrom = fromInput.value;
 
-    const temp = from.value;
-
-    from.value = to.value;
-    to.value = temp;
+    fromInput.value = toInput.value;
+    toInput.value = oldFrom;
 
 });
 
@@ -35,100 +48,259 @@ document.getElementById("swapButton").addEventListener("click", () => {
 // Vyhledávání
 // ===============================
 
-document.getElementById("searchButton").addEventListener("click", () => {
+searchButton.addEventListener("click", search);
 
-    const from = document.getElementById("from").value.trim();
-    const to = document.getElementById("to").value.trim();
-    const time = document.getElementById("time").value;
+// Enter ve formuláři
+[fromInput, toInput, timeInput].forEach(input => {
 
-    if(from === ""){
+    input.addEventListener("keydown", event => {
 
-        alert("Vyplň zastávku Odkud.");
+        if (event.key === "Enter") {
+            search();
+        }
 
-        return;
-
-    }
-
-    if(to === ""){
-
-        alert("Vyplň zastávku Kam.");
-
-        return;
-
-    }
-
-    if(from === to){
-
-        alert("Zastávky jsou stejné.");
-
-        return;
-
-    }
-
-    const results = findConnections(from,to,time);
-
-    showResults(results,from,to);
+    });
 
 });
+
+// ===============================
+// Hlavní vyhledávání
+// ===============================
+
+function search() {
+
+    const from = fromInput.value.trim();
+    const to = toInput.value.trim();
+    const time = timeInput.value;
+
+    if (!from) {
+
+        showMessage("Zadej výchozí zastávku.");
+
+        return;
+
+    }
+
+    if (!to) {
+
+        showMessage("Zadej cílovou zastávku.");
+
+        return;
+
+    }
+
+    if (from === to) {
+
+        showMessage("Výchozí a cílová zastávka musí být rozdílné.");
+
+        return;
+
+    }
+
+    if (!time) {
+
+        showMessage("Zadej čas.");
+
+        return;
+
+    }
+
+    if (typeof findTransferConnections !== "function") {
+
+        showMessage("Vyhledávač ještě není načten.");
+
+        console.error(
+            "Funkce findTransferConnections() nebyla nalezena."
+        );
+
+        return;
+
+    }
+
+    const connections =
+        findTransferConnections(from, to, time);
+
+    displayResults(connections, from, to);
+
+}
+
+// ===============================
+// Zobrazení zprávy
+// ===============================
+
+function showMessage(message) {
+
+    resultsContainer.innerHTML = `
+        <div class="resultCard">
+            <h2>${message}</h2>
+        </div>
+    `;
+
+}
 
 // ===============================
 // Zobrazení výsledků
 // ===============================
 
-function showResults(results,from,to){
+function displayResults(results, from, to) {
 
-    const container = document.getElementById("results");
+    resultsContainer.innerHTML = "";
 
-    container.innerHTML = "";
+    if (!results || results.length === 0) {
 
-    if(results.length === 0){
-
-        container.innerHTML =
-
-        `<div class="resultCard">
-
-            <h2>Žádné spojení nebylo nalezeno.</h2>
-
-        </div>`;
+        showMessage(
+            "Od zadaného času nebylo nalezeno žádné spojení."
+        );
 
         return;
 
     }
 
-    results.forEach(connection=>{
-
-        const color = getVehicleColor(connection.type);
-
-        const icon = getVehicleIcon(connection.type);
+    results.forEach(connection => {
 
         const card = document.createElement("div");
 
         card.className = "resultCard";
 
-        card.innerHTML =
+        // Přímý spoj
+        if (!connection.transfer) {
 
-        `
+            const routeInfo =
+                getRouteInfo(connection.line);
+
+            const icon =
+                routeInfo?.icon || "";
+
+            const color =
+                routeInfo?.color || "#777";
+
+            card.innerHTML = `
+
+                <div class="departureTime">
+                    ${connection.departure}
+                </div>
+
+                <div class="lineRow">
+
+                    <span
+                        class="lineBadge"
+                        style="background:${color};">
+
+                        ${icon}
+                        ${connection.line}
+
+                    </span>
+
+                    <span class="direction">
+                        ${connection.direction || ""}
+                    </span>
+
+                </div>
+
+                <div class="times">
+
+                    <div>
+
+                        <strong>Odjezd</strong><br>
+
+                        ${from}<br>
+
+                        ${connection.departure}
+
+                    </div>
+
+                    <div>
+
+                        <strong>Příjezd</strong><br>
+
+                        ${to}<br>
+
+                        ${connection.arrival}
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+
+        // Spoj s přestupem
+        else {
+
+            card.innerHTML =
+                createTransferHTML(connection, from, to);
+
+        }
+
+        resultsContainer.appendChild(card);
+
+    });
+
+}
+
+// ===============================
+// Informace o lince z routes.json
+// ===============================
+
+function getRouteInfo(line) {
+
+    if (typeof allRoutes === "undefined") {
+        return null;
+    }
+
+    return allRoutes.find(route =>
+        String(route.line) === String(line)
+    );
+
+}
+
+// ===============================
+// HTML pro přestup
+// ===============================
+
+function createTransferHTML(connection, from, to) {
+
+    const first = connection.first;
+    const second = connection.second;
+
+    const firstRoute =
+        getRouteInfo(first.line);
+
+    const secondRoute =
+        getRouteInfo(second.line);
+
+    const firstIcon =
+        firstRoute?.icon || "";
+
+    const secondIcon =
+        secondRoute?.icon || "";
+
+    const firstColor =
+        firstRoute?.color || "#777";
+
+    const secondColor =
+        secondRoute?.color || "#777";
+
+    return `
+
         <div class="departureTime">
-
-            ${connection.departure}
-
+            ${first.departure}
         </div>
 
         <div class="lineRow">
 
             <span
                 class="lineBadge"
-                style="background:${color};">
+                style="background:${firstColor};">
 
-                ${icon}
-                ${connection.line}
+                ${firstIcon}
+                ${first.line}
 
             </span>
 
             <span class="direction">
-
-                ${connection.direction}
-
+                ${first.direction || ""}
             </span>
 
         </div>
@@ -141,7 +313,56 @@ function showResults(results,from,to){
 
                 ${from}<br>
 
-                ${connection.departure}
+                ${first.departure}
+
+            </div>
+
+            <div>
+
+                <strong>Příjezd</strong><br>
+
+                ${connection.stop}<br>
+
+                ${first.arrival}
+
+            </div>
+
+        </div>
+
+        <div class="transfer">
+
+            Přestup na
+            <strong>${second.line}</strong>
+            ${secondIcon}
+
+        </div>
+
+        <div class="lineRow">
+
+            <span
+                class="lineBadge"
+                style="background:${secondColor};">
+
+                ${secondIcon}
+                ${second.line}
+
+            </span>
+
+            <span class="direction">
+                ${second.direction || ""}
+            </span>
+
+        </div>
+
+        <div class="times">
+
+            <div>
+
+                <strong>Odjezd</strong><br>
+
+                ${connection.stop}<br>
+
+                ${second.departure}
 
             </div>
 
@@ -151,41 +372,12 @@ function showResults(results,from,to){
 
                 ${to}<br>
 
-                ${connection.arrival}
+                ${second.arrival}
 
             </div>
 
         </div>
 
-        `;
-
-        container.appendChild(card);
-
-    });
+    `;
 
 }
-
-// ===============================
-// Enter = hledat
-// ===============================
-
-document.getElementById("from").addEventListener("keydown",function(e){
-
-    if(e.key==="Enter")
-        document.getElementById("searchButton").click();
-
-});
-
-document.getElementById("to").addEventListener("keydown",function(e){
-
-    if(e.key==="Enter")
-        document.getElementById("searchButton").click();
-
-});
-
-document.getElementById("time").addEventListener("keydown",function(e){
-
-    if(e.key==="Enter")
-        document.getElementById("searchButton").click();
-
-});
