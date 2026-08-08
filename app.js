@@ -13,10 +13,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     // ==================================================
-    // KONTROLA
+    // KONTROLA HTML
     // ==================================================
 
-    if (!fromInput || !toInput || !searchButton || !resultsContainer) {
+    if (
+        !fromInput ||
+        !toInput ||
+        !searchButton ||
+        !resultsContainer
+    ) {
         console.error("Chybí některý HTML prvek.");
         return;
     }
@@ -29,14 +34,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     // ==================================================
-    // NAČTENÍ ROUTES.JSON
+    // ROUTES.JSON
     // ==================================================
 
     let routes = [];
 
     try {
 
-        const response = await fetch("data/routes.json");
+        const response =
+            await fetch("data/routes.json");
 
         if (!response.ok) {
             throw new Error(
@@ -46,7 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         routes = await response.json();
 
-        console.log("ROUTES:", routes);
+        console.log("Načtené linky:", routes);
 
     } catch (error) {
 
@@ -54,29 +60,36 @@ document.addEventListener("DOMContentLoaded", async () => {
             "Nepodařilo se načíst routes.json:",
             error
         );
+
+        resultsContainer.innerHTML = `
+            <div class="resultCard">
+                <strong>Chyba:</strong>
+                nepodařilo se načíst routes.json.
+            </div>
+        `;
+
+        return;
     }
 
 
     // ==================================================
-    // FUNKCE PRO INFORMACE O LINCE
+    // INFORMACE O LINCE
     // ==================================================
 
     function getRouteInfo(line) {
 
-        const found = routes.find(
-            route =>
-                String(route.line).trim() ===
-                String(line).trim()
-        );
+        const found =
+            routes.find(
+                route =>
+                    String(route.line).trim() ===
+                    String(line).trim()
+            );
+
 
         if (found) {
             return found;
         }
 
-        console.warn(
-            "Linka nebyla nalezena v routes.json:",
-            line
-        );
 
         return {
             line: String(line),
@@ -88,50 +101,42 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     // ==================================================
-    // NAČTENÍ VŠECH ZASTÁVEK
+    // VŠECHNY ZASTÁVKY
     // ==================================================
 
     async function loadAllStops() {
 
         if (!stopsList) {
-            console.error("Nenalezen datalist #stops.");
             return;
         }
 
-        const allStops = new Set();
+
+        const allStops =
+            new Set();
 
 
-        for (const route of routes) {
+        for (
+            const route
+            of routes
+        ) {
 
             try {
 
                 const timetable =
-                    await window.searchTimetable.loadTimetable(
-                        route.line
-                    );
-
-
-                if (
-                    !timetable ||
-                    !timetable.directions
-                ) {
-                    continue;
-                }
+                    await window.searchTimetable
+                        .loadTimetable(
+                            route.line
+                        );
 
 
                 for (
                     const direction
-                    of timetable.directions
+                    of timetable.directions || []
                 ) {
-
-                    if (!direction.stops) {
-                        continue;
-                    }
-
 
                     for (
                         const stop
-                        of direction.stops
+                        of direction.stops || []
                     ) {
 
                         allStops.add(stop);
@@ -141,7 +146,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             } catch (error) {
 
                 console.warn(
-                    `Nepodařilo se načíst jízdní řád linky ${route.line}:`,
+                    `Nelze načíst linku ${route.line}:`,
                     error
                 );
             }
@@ -158,20 +163,19 @@ document.addEventListener("DOMContentLoaded", async () => {
             );
 
 
-        for (const stop of sortedStops) {
+        for (
+            const stop
+            of sortedStops
+        ) {
 
             const option =
                 document.createElement("option");
 
-            option.value = stop;
+            option.value =
+                stop;
 
             stopsList.appendChild(option);
         }
-
-
-        console.log(
-            `Načteno zastávek: ${sortedStops.length}`
-        );
     }
 
 
@@ -179,7 +183,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     // ==================================================
-    // PROHOZENÍ ZASTÁVEK
+    // PROHOZENÍ
     // ==================================================
 
     if (swapButton) {
@@ -205,20 +209,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     // VÝCHOZÍ DATUM
     // ==================================================
 
-    if (dateInput && !dateInput.value) {
+    if (
+        dateInput &&
+        !dateInput.value
+    ) {
 
-        const today = new Date();
+        const today =
+            new Date();
+
 
         const year =
             today.getFullYear();
 
         const month =
-            String(today.getMonth() + 1)
-                .padStart(2, "0");
+            String(
+                today.getMonth() + 1
+            ).padStart(2, "0");
 
         const day =
-            String(today.getDate())
-                .padStart(2, "0");
+            String(
+                today.getDate()
+            ).padStart(2, "0");
+
 
         dateInput.value =
             `${year}-${month}-${day}`;
@@ -231,70 +243,60 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     function getDayType() {
 
-        if (!dateInput || !dateInput.value) {
+        let date;
 
-            const today = new Date();
 
-            const day =
-                today.getDay();
+        if (
+            dateInput &&
+            dateInput.value
+        ) {
 
-            return (
-                day === 0 ||
-                day === 6
-            )
-                ? "weekends"
-                : "weekdays";
+            date =
+                new Date(
+                    dateInput.value +
+                    "T12:00:00"
+                );
+
+        } else {
+
+            date =
+                new Date();
         }
-
-
-        const date =
-            new Date(
-                dateInput.value +
-                "T12:00:00"
-            );
 
 
         const day =
             date.getDay();
 
 
-        return (
+        if (
             day === 0 ||
             day === 6
-        )
-            ? "weekends"
-            : "weekdays";
+        ) {
+
+            return "weekends";
+        }
+
+
+        return "weekdays";
     }
 
 
     // ==================================================
-    // VYTVOŘENÍ VÝSLEDKU
+    // VYTVOŘENÍ HLAVIČKY LINKY
     // ==================================================
 
-    function createResult(connection) {
+    function createLineHeader(
+        line,
+        destination
+    ) {
 
         const route =
-            getRouteInfo(connection.line);
+            getRouteInfo(line);
 
-
-        const card =
-            document.createElement("div");
-
-        card.className =
-            "resultCard";
-
-
-        // Barva celé levé strany
-        card.style.borderLeft =
-            `8px solid ${route.color}`;
-
-
-        // ==================================================
-        // HLAVIČKA
-        // ==================================================
 
         const header =
             document.createElement("div");
+
 
         header.className =
             "resultHeader";
@@ -304,58 +306,132 @@ document.addEventListener("DOMContentLoaded", async () => {
             route.color;
 
 
-        const shortLabel =
-            connection.isShortTrip
-                ? " S"
-                : "";
+        header.style.color =
+            "white";
 
 
         header.innerHTML = `
+
             <span class="routeIcon">
                 ${route.icon}
             </span>
 
-            <span class="routeNumber">
-                ${route.line}${shortLabel}
+            <strong class="routeNumber">
+                ${route.line}
+            </strong>
+
+            <span class="routeDirection">
+                Směr: ${destination}
             </span>
+
         `;
 
 
-        card.appendChild(header);
+        return header;
+    }
 
 
-        // ==================================================
-        // SMĚR
-        // ==================================================
+    // ==================================================
+    // ZASTÁVKY
+    // ==================================================
 
-        const direction =
+    function createStopsBox(
+        stops,
+        line
+    ) {
+
+        const box =
             document.createElement("div");
 
-        direction.className =
-            "routeDirection";
+
+        box.className =
+            "resultStops";
 
 
-        direction.innerHTML = `
-            <strong>Směr:</strong>
-            ${connection.destination}
-        `;
+        const route =
+            getRouteInfo(line);
 
 
-        card.appendChild(direction);
+        for (
+            const stop
+            of stops
+        ) {
+
+            const row =
+                document.createElement("div");
 
 
-        // ==================================================
-        // HLAVNÍ ČASY
-        // ==================================================
+            row.className =
+                "stopRow";
+
+
+            const dot =
+                document.createElement("span");
+
+
+            dot.className =
+                "stopDot";
+
+
+            dot.style.backgroundColor =
+                route.color;
+
+
+            const name =
+                document.createElement("span");
+
+
+            name.className =
+                "stopName";
+
+
+            name.textContent =
+                stop.name;
+
+
+            const time =
+                document.createElement("span");
+
+
+            time.className =
+                "stopTime";
+
+
+            time.textContent =
+                stop.time;
+
+
+            row.appendChild(dot);
+            row.appendChild(name);
+            row.appendChild(time);
+
+
+            box.appendChild(row);
+        }
+
+
+        return box;
+    }
+
+
+    // ==================================================
+    // ČASY OD → DO
+    // ==================================================
+
+    function createMainTimes(
+        connection
+    ) {
 
         const main =
             document.createElement("div");
+
 
         main.className =
             "resultMain";
 
 
         main.innerHTML = `
+
             <div class="mainStop">
 
                 <div class="mainTime">
@@ -383,135 +459,43 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </div>
 
             </div>
+
         `;
 
 
-        card.appendChild(main);
+        return main;
+    }
 
 
-        // ==================================================
-        // ZASTÁVKY POUZE MEZI FROM A TO
-        // ==================================================
+    // ==================================================
+    // TLAČÍTKO ZASTÁVEK
+    // ==================================================
 
-        const stopsBox =
-            document.createElement("div");
+    function createToggle(
+        stopsBox
+    ) {
 
-        stopsBox.className =
-            "resultStops";
-
-
-        const fromIndex =
-            connection.stops.findIndex(
-                stop =>
-                    stop.name ===
-                    connection.from
-            );
+        const button =
+            document.createElement("button");
 
 
-        const toIndex =
-            connection.stops.findIndex(
-                stop =>
-                    stop.name ===
-                    connection.to
-            );
+        button.type =
+            "button";
 
 
-        if (
-            fromIndex !== -1 &&
-            toIndex !== -1 &&
-            fromIndex <= toIndex
-        ) {
-
-            for (
-                let i = fromIndex;
-                i <= toIndex;
-                i++
-            ) {
-
-                const stop =
-                    connection.stops[i];
+        button.className =
+            "stopsToggle";
 
 
-                const row =
-                    document.createElement("div");
+        button.textContent =
+            "Zobrazit zastávky ▼";
 
-                row.className =
-                    "stopRow";
-
-
-                // Tečka
-                const dot =
-                    document.createElement("span");
-
-                dot.className =
-                    "stopDot";
-
-
-                dot.style.backgroundColor =
-                    route.color;
-
-
-                // Název
-                const name =
-                    document.createElement("span");
-
-                name.className =
-                    "stopName";
-
-                name.textContent =
-                    stop.name;
-
-
-                // Čas
-                const time =
-                    document.createElement("span");
-
-                time.className =
-                    "stopTime";
-
-                time.textContent =
-                    stop.time;
-
-
-                row.appendChild(dot);
-                row.appendChild(name);
-                row.appendChild(time);
-
-
-                stopsBox.appendChild(row);
-            }
-        }
-
-
-        // ==================================================
-        // ZASTÁVKY JSOU ZAKRYTÉ
-        // ==================================================
 
         stopsBox.style.display =
             "none";
 
 
-        card.appendChild(stopsBox);
-
-
-        // ==================================================
-        // TLAČÍTKO PRO ROZKLIKNUTÍ
-        // ==================================================
-
-        const toggle =
-            document.createElement("button");
-
-        toggle.type =
-            "button";
-
-        toggle.className =
-            "stopsToggle";
-
-        toggle.textContent =
-            "Zobrazit zastávky ▼";
-
-
-        toggle.addEventListener(
+        button.addEventListener(
             "click",
             () => {
 
@@ -525,7 +509,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     stopsBox.style.display =
                         "block";
 
-                    toggle.textContent =
+                    button.textContent =
                         "Skrýt zastávky ▲";
 
                 } else {
@@ -533,14 +517,334 @@ document.addEventListener("DOMContentLoaded", async () => {
                     stopsBox.style.display =
                         "none";
 
-                    toggle.textContent =
+                    button.textContent =
                         "Zobrazit zastávky ▼";
                 }
             }
         );
 
 
-        card.appendChild(toggle);
+        return button;
+    }
+
+
+    // ==================================================
+    // PŘÍMÝ SPOJ
+    // ==================================================
+
+    function createDirectResult(
+        connection
+    ) {
+
+        const route =
+            getRouteInfo(
+                connection.line
+            );
+
+
+        const card =
+            document.createElement("div");
+
+
+        card.className =
+            "resultCard";
+
+
+        card.style.borderLeft =
+            `8px solid ${route.color}`;
+
+
+        // ------------------------------------------
+        // LINKA
+        // ------------------------------------------
+
+        card.appendChild(
+            createLineHeader(
+                connection.line,
+                connection.destination
+            )
+        );
+
+
+        // ------------------------------------------
+        // ČASY
+        // ------------------------------------------
+
+        card.appendChild(
+            createMainTimes(
+                connection
+            )
+        );
+
+
+        // ------------------------------------------
+        // ZASTÁVKY
+        // ------------------------------------------
+
+        const stopsBox =
+            createStopsBox(
+                connection.stops,
+                connection.line
+            );
+
+
+        card.appendChild(
+            stopsBox
+        );
+
+
+        // ------------------------------------------
+        // TLAČÍTKO
+        // ------------------------------------------
+
+        card.appendChild(
+            createToggle(
+                stopsBox
+            )
+        );
+
+
+        return card;
+    }
+
+
+    // ==================================================
+    // JEDNA ČÁST PŘESTUPU
+    // ==================================================
+
+    function createTransferPart(
+        connection,
+        number
+    ) {
+
+        const wrapper =
+            document.createElement("div");
+
+
+        wrapper.className =
+            "transferPart";
+
+
+        // ------------------------------------------
+        // ČÍSLO SPOJE
+        // ------------------------------------------
+
+        const title =
+            document.createElement("div");
+
+
+        title.className =
+            "transferTitle";
+
+
+        title.textContent =
+            `${number}. spoj`;
+
+
+        wrapper.appendChild(
+            title
+        );
+
+
+        // ------------------------------------------
+        // LINKA
+        // ------------------------------------------
+
+        wrapper.appendChild(
+            createLineHeader(
+                connection.line,
+                connection.destination
+            )
+        );
+
+
+        // ------------------------------------------
+        // ČASY
+        // ------------------------------------------
+
+        wrapper.appendChild(
+            createMainTimes(
+                connection
+            )
+        );
+
+
+        // ------------------------------------------
+        // ZASTÁVKY
+        // ------------------------------------------
+
+        const stopsBox =
+            createStopsBox(
+                connection.stops,
+                connection.line
+            );
+
+
+        wrapper.appendChild(
+            stopsBox
+        );
+
+
+        return {
+            wrapper,
+            stopsBox
+        };
+    }
+
+
+    // ==================================================
+    // PŘESTUPNÍ SPOJ
+    // ==================================================
+
+    function createTransferResult(
+        connection
+    ) {
+
+        const card =
+            document.createElement("div");
+
+
+        card.className =
+            "resultCard";
+
+
+        card.style.borderLeft =
+            "8px solid #777";
+
+
+        // ------------------------------------------
+        // PRVNÍ SPOJ
+        // ------------------------------------------
+
+        const first =
+            createTransferPart(
+                connection.first,
+                1
+            );
+
+
+        card.appendChild(
+            first.wrapper
+        );
+
+
+        // ------------------------------------------
+        // PŘESTUP
+        // ------------------------------------------
+
+        const transfer =
+            document.createElement("div");
+
+
+        transfer.className =
+            "transferStop";
+
+
+        transfer.innerHTML = `
+
+            <span>
+                🔄
+            </span>
+
+            <strong>
+                Přestup:
+            </strong>
+
+            ${connection.transferStop}
+
+        `;
+
+
+        card.appendChild(
+            transfer
+        );
+
+
+        // ------------------------------------------
+        // DRUHÝ SPOJ
+        // ------------------------------------------
+
+        const second =
+            createTransferPart(
+                connection.second,
+                2
+            );
+
+
+        card.appendChild(
+            second.wrapper
+        );
+
+
+        // ------------------------------------------
+        // ZASTÁVKY JSOU SKRYTÉ
+        // ------------------------------------------
+
+        first.stopsBox.style.display =
+            "none";
+
+        second.stopsBox.style.display =
+            "none";
+
+
+        // ------------------------------------------
+        // TLAČÍTKO
+        // ------------------------------------------
+
+        const button =
+            document.createElement("button");
+
+
+        button.type =
+            "button";
+
+
+        button.className =
+            "stopsToggle";
+
+
+        button.textContent =
+            "Zobrazit zastávky ▼";
+
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                const hidden =
+                    first.stopsBox.style.display ===
+                    "none";
+
+
+                if (hidden) {
+
+                    first.stopsBox.style.display =
+                        "block";
+
+                    second.stopsBox.style.display =
+                        "block";
+
+                    button.textContent =
+                        "Skrýt zastávky ▲";
+
+                } else {
+
+                    first.stopsBox.style.display =
+                        "none";
+
+                    second.stopsBox.style.display =
+                        "none";
+
+                    button.textContent =
+                        "Zobrazit zastávky ▼";
+                }
+            }
+        );
+
+
+        card.appendChild(
+            button
+        );
 
 
         return card;
@@ -573,19 +877,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                     : "00:00";
 
 
-            // ==================================================
-            // KONTROLA VSTUPU
-            // ==================================================
+            // ------------------------------------------
+            // KONTROLA
+            // ------------------------------------------
 
             if (!from || !to) {
 
                 resultsContainer.innerHTML = `
                     <div class="resultCard">
-
                         <strong>
                             Vyber výchozí a cílovou zastávku.
                         </strong>
-
                     </div>
                 `;
 
@@ -600,10 +902,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 resultsContainer.innerHTML = `
                     <div class="resultCard">
-
                         Výchozí a cílová zastávka
                         musí být rozdílné.
-
                     </div>
                 `;
 
@@ -611,9 +911,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
 
-            // ==================================================
+            // ------------------------------------------
             // VYHLEDÁVÁNÍ
-            // ==================================================
+            // ------------------------------------------
 
             resultsContainer.innerHTML = `
                 <div class="resultCard">
@@ -635,23 +935,41 @@ document.addEventListener("DOMContentLoaded", async () => {
                     );
 
 
+                console.log(
+                    "Hledám:",
+                    from,
+                    "→",
+                    to,
+                    "od",
+                    afterTime,
+                    dayType
+                );
+
+
                 const connections =
-                    await window.searchTimetable.findConnections(
-                        from,
-                        to,
-                        afterTime,
-                        dayType,
-                        lineNumbers
-                    );
+                    await window.searchTimetable
+                        .findConnections(
+                            from,
+                            to,
+                            afterTime,
+                            dayType,
+                            lineNumbers
+                        );
+
+
+                console.log(
+                    "Výsledky:",
+                    connections
+                );
 
 
                 resultsContainer.innerHTML =
                     "";
 
 
-                // ==================================================
+                // ------------------------------------------
                 // ŽÁDNÝ VÝSLEDEK
-                // ==================================================
+                // ------------------------------------------
 
                 if (
                     !connections ||
@@ -662,7 +980,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         <div class="resultCard">
 
                             <strong>
-                                Žádné přímé spojení nebylo nalezeno.
+                                Spojení nebylo nalezeno.
                             </strong>
 
                             <p>
@@ -678,23 +996,39 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
 
 
-                // ==================================================
+                // ------------------------------------------
                 // VÝSLEDKY
-                // ==================================================
+                // ------------------------------------------
 
                 for (
                     const connection
                     of connections
                 ) {
 
-                    const result =
-                        createResult(
-                            connection
-                        );
+                    let card;
+
+
+                    if (
+                        connection.type ===
+                        "transfer"
+                    ) {
+
+                        card =
+                            createTransferResult(
+                                connection
+                            );
+
+                    } else {
+
+                        card =
+                            createDirectResult(
+                                connection
+                            );
+                    }
 
 
                     resultsContainer.appendChild(
-                        result
+                        card
                     );
                 }
 
@@ -702,7 +1036,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             } catch (error) {
 
                 console.error(
-                    "CHYBA VYHLEDÁVÁNÍ:",
+                    "CHYBA PŘI VYHLEDÁVÁNÍ:",
                     error
                 );
 
@@ -711,12 +1045,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <div class="resultCard">
 
                         <strong>
-                            Chyba při vyhledávání.
+                            Chyba při vyhledávání
                         </strong>
 
                         <p>
                             ${error.message}
                         </p>
+
+                        <small>
+                            Podrobnosti jsou v konzoli prohlížeče.
+                        </small>
 
                     </div>
                 `;
