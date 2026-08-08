@@ -4,30 +4,27 @@
 
 const fromInput = document.getElementById("from");
 const toInput = document.getElementById("to");
-const dateInput = document.getElementById("date");
 const timeInput = document.getElementById("time");
 const searchButton = document.getElementById("searchButton");
 const swapButton = document.getElementById("swapButton");
 const resultsContainer = document.getElementById("results");
 
 // ===============================
-// Aktuální datum a čas
+// Aktuální čas
 // ===============================
 
 window.addEventListener("load", () => {
 
-    const now = new Date();
+    if (timeInput) {
 
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
+        const now = new Date();
 
-    dateInput.value = `${year}-${month}-${day}`;
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
 
-    const hours = String(now.getHours()).padStart(2, "0");
-    const minutes = String(now.getMinutes()).padStart(2, "0");
+        timeInput.value = `${hours}:${minutes}`;
 
-    timeInput.value = `${hours}:${minutes}`;
+    }
 
 });
 
@@ -35,28 +32,45 @@ window.addEventListener("load", () => {
 // Prohození zastávek
 // ===============================
 
-swapButton.addEventListener("click", () => {
+if (swapButton) {
 
-    const oldFrom = fromInput.value;
+    swapButton.addEventListener("click", () => {
 
-    fromInput.value = toInput.value;
-    toInput.value = oldFrom;
+        const oldFrom = fromInput.value;
 
-});
+        fromInput.value = toInput.value;
+        toInput.value = oldFrom;
+
+    });
+
+}
 
 // ===============================
-// Vyhledávání
+// Tlačítko vyhledávání
 // ===============================
 
-searchButton.addEventListener("click", search);
+if (searchButton) {
 
-// Enter ve formuláři
+    searchButton.addEventListener("click", search);
+
+}
+
+// ===============================
+// Enter = vyhledat
+// ===============================
+
 [fromInput, toInput, timeInput].forEach(input => {
+
+    if (!input) return;
 
     input.addEventListener("keydown", event => {
 
         if (event.key === "Enter") {
+
+            event.preventDefault();
+
             search();
+
         }
 
     });
@@ -64,7 +78,7 @@ searchButton.addEventListener("click", search);
 });
 
 // ===============================
-// Hlavní vyhledávání
+// Vyhledávání
 // ===============================
 
 function search() {
@@ -91,7 +105,9 @@ function search() {
 
     if (from === to) {
 
-        showMessage("Výchozí a cílová zastávka musí být rozdílné.");
+        showMessage(
+            "Výchozí a cílová zastávka musí být rozdílné."
+        );
 
         return;
 
@@ -105,22 +121,148 @@ function search() {
 
     }
 
-    if (typeof findTransferConnections !== "function") {
+    if (typeof findConnections !== "function") {
 
-        showMessage("Vyhledávač ještě není načten.");
+        showMessage("Vyhledávač spojů není načten.");
 
         console.error(
-            "Funkce findTransferConnections() nebyla nalezena."
+            "V search.js chybí funkce findConnections()."
         );
 
         return;
 
     }
 
-    const connections =
-        findTransferConnections(from, to, time);
+    let results = [];
 
-    displayResults(connections, from, to);
+    // ===============================
+    // Přímé spoje
+    // ===============================
+
+    const directConnections =
+        findConnections(from, to, time);
+
+    results.push(...directConnections);
+
+    // ===============================
+    // Spoje s přestupem
+    // ===============================
+
+    if (typeof findTransferConnections === "function") {
+
+        const transferConnections =
+            findTransferConnections(from, to, time);
+
+        results.push(...transferConnections);
+
+    }
+
+    // ===============================
+    // Odstranění duplicit
+    // ===============================
+
+    results = removeDuplicates(results);
+
+    // ===============================
+    // Seřazení podle odjezdu
+    // ===============================
+
+    results.sort((a, b) => {
+
+        return getDepartureMinutes(a)
+            - getDepartureMinutes(b);
+
+    });
+
+    displayResults(results, from, to);
+
+}
+
+// ===============================
+// Čas odjezdu výsledku
+// ===============================
+
+function getDepartureMinutes(connection) {
+
+    if (connection.transfer && connection.first) {
+
+        return timeToMinutes(
+            connection.first.departure
+        );
+
+    }
+
+    return timeToMinutes(
+        connection.departure
+    );
+
+}
+
+// ===============================
+// Odstranění duplicit
+// ===============================
+
+function removeDuplicates(results) {
+
+    const unique = [];
+    const keys = new Set();
+
+    results.forEach(connection => {
+
+        let key;
+
+        if (connection.transfer) {
+
+            key =
+                "transfer|" +
+                connection.first.line + "|" +
+                connection.first.departure + "|" +
+                connection.stop + "|" +
+                connection.second.line + "|" +
+                connection.second.departure;
+
+        } else {
+
+            key =
+                "direct|" +
+                connection.line + "|" +
+                connection.departure + "|" +
+                connection.arrival;
+
+        }
+
+        if (!keys.has(key)) {
+
+            keys.add(key);
+
+            unique.push(connection);
+
+        }
+
+    });
+
+    return unique;
+
+}
+
+// ===============================
+// Informace o lince z routes.json
+// ===============================
+
+function getRouteInfo(line) {
+
+    if (
+        typeof allRoutes === "undefined" ||
+        !Array.isArray(allRoutes)
+    ) {
+
+        return null;
+
+    }
+
+    return allRoutes.find(route =>
+        String(route.line) === String(line)
+    );
 
 }
 
@@ -130,10 +272,16 @@ function search() {
 
 function showMessage(message) {
 
+    if (!resultsContainer) return;
+
     resultsContainer.innerHTML = `
+
         <div class="resultCard">
-            <h2>${message}</h2>
+
+            <h2>${escapeHTML(message)}</h2>
+
         </div>
+
     `;
 
 }
@@ -143,6 +291,8 @@ function showMessage(message) {
 // ===============================
 
 function displayResults(results, from, to) {
+
+    if (!resultsContainer) return;
 
     resultsContainer.innerHTML = "";
 
@@ -162,74 +312,23 @@ function displayResults(results, from, to) {
 
         card.className = "resultCard";
 
-        // Přímý spoj
-        if (!connection.transfer) {
-
-            const routeInfo =
-                getRouteInfo(connection.line);
-
-            const icon =
-                routeInfo?.icon || "";
-
-            const color =
-                routeInfo?.color || "#777";
-
-            card.innerHTML = `
-
-                <div class="departureTime">
-                    ${connection.departure}
-                </div>
-
-                <div class="lineRow">
-
-                    <span
-                        class="lineBadge"
-                        style="background:${color};">
-
-                        ${icon}
-                        ${connection.line}
-
-                    </span>
-
-                    <span class="direction">
-                        ${connection.direction || ""}
-                    </span>
-
-                </div>
-
-                <div class="times">
-
-                    <div>
-
-                        <strong>Odjezd</strong><br>
-
-                        ${from}<br>
-
-                        ${connection.departure}
-
-                    </div>
-
-                    <div>
-
-                        <strong>Příjezd</strong><br>
-
-                        ${to}<br>
-
-                        ${connection.arrival}
-
-                    </div>
-
-                </div>
-
-            `;
-
-        }
-
-        // Spoj s přestupem
-        else {
+        if (connection.transfer) {
 
             card.innerHTML =
-                createTransferHTML(connection, from, to);
+                createTransferHTML(
+                    connection,
+                    from,
+                    to
+                );
+
+        } else {
+
+            card.innerHTML =
+                createDirectHTML(
+                    connection,
+                    from,
+                    to
+                );
 
         }
 
@@ -240,23 +339,92 @@ function displayResults(results, from, to) {
 }
 
 // ===============================
-// Informace o lince z routes.json
+// Přímý spoj
 // ===============================
 
-function getRouteInfo(line) {
+function createDirectHTML(connection, from, to) {
 
-    if (typeof allRoutes === "undefined") {
-        return null;
-    }
+    const route = getRouteInfo(connection.line);
 
-    return allRoutes.find(route =>
-        String(route.line) === String(line)
-    );
+    const icon =
+        route?.icon || "❓";
+
+    const color =
+        route?.color || "#777";
+
+    const line =
+        escapeHTML(connection.line);
+
+    const direction =
+        escapeHTML(connection.direction || "");
+
+    const departure =
+        escapeHTML(connection.departure);
+
+    const arrival =
+        escapeHTML(connection.arrival);
+
+    return `
+
+        <div class="departureTime">
+
+            ${departure}
+
+        </div>
+
+        <div class="lineRow">
+
+            <span
+                class="lineBadge"
+                style="background-color:${color};"
+            >
+
+                ${icon}
+
+                <strong>
+                    ${line}
+                </strong>
+
+            </span>
+
+            <span class="direction">
+
+                ${direction}
+
+            </span>
+
+        </div>
+
+        <div class="times">
+
+            <div>
+
+                <strong>Odjezd</strong><br>
+
+                ${escapeHTML(from)}<br>
+
+                ${departure}
+
+            </div>
+
+            <div>
+
+                <strong>Příjezd</strong><br>
+
+                ${escapeHTML(to)}<br>
+
+                ${arrival}
+
+            </div>
+
+        </div>
+
+    `;
 
 }
 
 // ===============================
-// HTML pro přestup
+// Spoj s přestupem
 // ===============================
 
 function createTransferHTML(connection, from, to) {
@@ -271,10 +439,10 @@ function createTransferHTML(connection, from, to) {
         getRouteInfo(second.line);
 
     const firstIcon =
-        firstRoute?.icon || "";
+        firstRoute?.icon || "❓";
 
     const secondIcon =
-        secondRoute?.icon || "";
+        secondRoute?.icon || "❓";
 
     const firstColor =
         firstRoute?.color || "#777";
@@ -285,22 +453,32 @@ function createTransferHTML(connection, from, to) {
     return `
 
         <div class="departureTime">
-            ${first.departure}
+
+            ${escapeHTML(first.departure)}
+
         </div>
+
+        <!-- PRVNÍ LINKA -->
 
         <div class="lineRow">
 
             <span
                 class="lineBadge"
-                style="background:${firstColor};">
+                style="background-color:${firstColor};"
+            >
 
                 ${firstIcon}
-                ${first.line}
+
+                <strong>
+                    ${escapeHTML(first.line)}
+                </strong>
 
             </span>
 
             <span class="direction">
-                ${first.direction || ""}
+
+                ${escapeHTML(first.direction || "")}
+
             </span>
 
         </div>
@@ -311,9 +489,9 @@ function createTransferHTML(connection, from, to) {
 
                 <strong>Odjezd</strong><br>
 
-                ${from}<br>
+                ${escapeHTML(from)}<br>
 
-                ${first.departure}
+                ${escapeHTML(first.departure)}
 
             </div>
 
@@ -321,35 +499,49 @@ function createTransferHTML(connection, from, to) {
 
                 <strong>Příjezd</strong><br>
 
-                ${connection.stop}<br>
+                ${escapeHTML(connection.stop)}<br>
 
-                ${first.arrival}
+                ${escapeHTML(first.arrival)}
 
             </div>
 
         </div>
+
+        <!-- PŘESTUP -->
 
         <div class="transfer">
 
             Přestup na
-            <strong>${second.line}</strong>
+
+            <strong>
+                ${escapeHTML(second.line)}
+            </strong>
+
             ${secondIcon}
 
         </div>
+
+        <!-- DRUHÁ LINKA -->
 
         <div class="lineRow">
 
             <span
                 class="lineBadge"
-                style="background:${secondColor};">
+                style="background-color:${secondColor};"
+            >
 
                 ${secondIcon}
-                ${second.line}
+
+                <strong>
+                    ${escapeHTML(second.line)}
+                </strong>
 
             </span>
 
             <span class="direction">
-                ${second.direction || ""}
+
+                ${escapeHTML(second.direction || "")}
+
             </span>
 
         </div>
@@ -360,9 +552,9 @@ function createTransferHTML(connection, from, to) {
 
                 <strong>Odjezd</strong><br>
 
-                ${connection.stop}<br>
+                ${escapeHTML(connection.stop)}<br>
 
-                ${second.departure}
+                ${escapeHTML(second.departure)}
 
             </div>
 
@@ -370,14 +562,35 @@ function createTransferHTML(connection, from, to) {
 
                 <strong>Příjezd</strong><br>
 
-                ${to}<br>
+                ${escapeHTML(to)}<br>
 
-                ${second.arrival}
+                ${escapeHTML(second.arrival)}
 
             </div>
 
         </div>
 
     `;
+
+}
+
+// ===============================
+// Ochrana textu
+// ===============================
+
+function escapeHTML(value) {
+
+    if (value === undefined || value === null) {
+
+        return "";
+
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 
 }
