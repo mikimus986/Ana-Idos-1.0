@@ -3,14 +3,23 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Vyhledávač spojení</title>
-
-    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+
+    <h1>Vyhledávač spojení</h1>
+
+
+    <!-- ===================================== -->
+    <!-- VYHLEDÁVÁNÍ -->
+    <!-- ===================================== -->
 
     <div class="searchBox">
 
@@ -40,8 +49,14 @@
         >
 
 
+        <!-- Nabídka zastávek -->
+
         <datalist id="stops"></datalist>
 
+
+        <!-- ================================= -->
+        <!-- PROHOZENÍ -->
+        <!-- ================================= -->
 
         <div class="swapBox">
 
@@ -55,6 +70,10 @@
         </div>
 
 
+        <!-- ================================= -->
+        <!-- DATUM -->
+        <!-- ================================= -->
+
         <label for="date">
             Datum
         </label>
@@ -64,6 +83,10 @@
             id="date"
         >
 
+
+        <!-- ================================= -->
+        <!-- ČAS -->
+        <!-- ================================= -->
 
         <label for="time">
             Čas
@@ -76,9 +99,14 @@
         >
 
 
+        <!-- ================================= -->
+        <!-- REŽIM -->
+        <!-- ================================= -->
+
         <div class="mode">
 
             <label>
+
                 <input
                     type="radio"
                     name="mode"
@@ -87,10 +115,12 @@
                 >
 
                 Odjezdy
+
             </label>
 
 
             <label>
+
                 <input
                     type="radio"
                     name="mode"
@@ -98,10 +128,15 @@
                 >
 
                 Příjezdy
+
             </label>
 
         </div>
 
+
+        <!-- ================================= -->
+        <!-- VYHLEDAT -->
+        <!-- ================================= -->
 
         <button
             id="searchButton"
@@ -112,6 +147,10 @@
 
     </div>
 
+
+    <!-- ===================================== -->
+    <!-- VÝSLEDKY -->
+    <!-- ===================================== -->
 
     <div id="results">
 
@@ -124,7 +163,9 @@
             <p>
                 Zadejte výchozí a cílovou zastávku
                 a klikněte na
-                <strong>Vyhledat spojení</strong>.
+                <strong>
+                    Vyhledat spojení
+                </strong>.
             </p>
 
         </div>
@@ -132,10 +173,9 @@
     </div>
 
 
-    <!--
-        DŮLEŽITÉ:
-        search.js musí být načtený jako první.
-    -->
+    <!-- ===================================== -->
+    <!-- JAVASCRIPT -->
+    <!-- ===================================== -->
 
     <script src="search.js"></script>
 
