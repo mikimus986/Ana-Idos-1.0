@@ -18,20 +18,17 @@
 
     <div class="searchBox">
 
-        <label for="from">Odkud</label>
-        <input
-            id="from"
-            list="stops"
-            placeholder="Např. Anské náměstí"
-            autocomplete="off"
-        >
+        <input id="from" type="text">
 
-        <label for="to">Kam</label>
-        <input
-            id="to"
-            list="stops"
-            placeholder="Např. NC Ana"
-            autocomplete="off"
+<input id="to" type="text">
+
+<input id="time" type="time" value="00:00">
+
+<button id="searchButton">
+    Vyhledat
+</button>
+
+<div id="results"></div>
         >
 
         <datalist id="stops"></datalist>
