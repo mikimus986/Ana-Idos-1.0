@@ -1,49 +1,80 @@
 <!DOCTYPE html>
 <html lang="cs">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ana IDOS</title>
+
+    <title>Vyhledávač spojení</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<header class="topbar">
-    <h1>Ana IDOS</h1>
-</header>
-
-<main class="container">
-
     <div class="searchBox">
 
-        <input id="from" type="text">
+        <label for="from">
+            Odkud
+        </label>
 
-<input id="to" type="text">
-
-<input id="time" type="time" value="00:00">
-
-<button id="searchButton">
-    Vyhledat
-</button>
-
-<div id="results"></div>
+        <input
+            id="from"
+            type="text"
+            list="stops"
+            autocomplete="off"
+            placeholder="Výchozí zastávka"
         >
+
+
+        <label for="to">
+            Kam
+        </label>
+
+        <input
+            id="to"
+            type="text"
+            list="stops"
+            autocomplete="off"
+            placeholder="Cílová zastávka"
+        >
+
 
         <datalist id="stops"></datalist>
 
+
         <div class="swapBox">
-            <button id="swapButton">
+
+            <button
+                id="swapButton"
+                type="button"
+            >
                 ⇅ Prohodit zastávky
             </button>
+
         </div>
 
-        <label for="date">Datum</label>
-        <input type="date" id="date">
 
-        <label for="time">Čas</label>
-        <input type="time" id="time">
+        <label for="date">
+            Datum
+        </label>
+
+        <input
+            type="date"
+            id="date"
+        >
+
+
+        <label for="time">
+            Čas
+        </label>
+
+        <input
+            type="time"
+            id="time"
+            value="00:00"
+        >
+
 
         <div class="mode">
 
@@ -54,8 +85,10 @@
                     value="departure"
                     checked
                 >
+
                 Odjezdy
             </label>
+
 
             <label>
                 <input
@@ -63,16 +96,22 @@
                     name="mode"
                     value="arrival"
                 >
+
                 Příjezdy
             </label>
 
         </div>
 
-        <button id="searchButton">
+
+        <button
+            id="searchButton"
+            type="button"
+        >
             Vyhledat spojení
         </button>
 
     </div>
+
 
     <div id="results">
 
@@ -83,7 +122,8 @@
             </div>
 
             <p>
-                Zadejte výchozí a cílovou zastávku a klikněte na
+                Zadejte výchozí a cílovou zastávku
+                a klikněte na
                 <strong>Vyhledat spojení</strong>.
             </p>
 
@@ -91,10 +131,16 @@
 
     </div>
 
-</main>
 
-<script src="search.js"></script>
-<script src="app.js"></script>
+    <!--
+        DŮLEŽITÉ:
+        search.js musí být načtený jako první.
+    -->
+
+    <script src="search.js"></script>
+
+    <script src="app.js"></script>
 
 </body>
+
 </html>
