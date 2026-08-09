@@ -2,159 +2,187 @@
 <html lang="cs">
 
 <head>
+
     <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <title>Vyhledávání spojení</title>
+    <title>Vyhledávač spojení</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
+
 
 <body>
 
-    <div class="container">
+    <!-- ==================================================
+         VYHLEDÁVÁNÍ
+    ================================================== -->
 
-        <h1>Vyhledávání spojení</h1>
+    <div class="searchBox">
 
-        <div class="searchBox">
+        <!-- VÝCHOZÍ ZASTÁVKA -->
 
-            <div class="inputRow">
+        <label for="from">
+            Z
+        </label>
 
-                <div class="inputGroup">
-                    <label for="from">Odkud</label>
-
-                    <input
-                        id="from"
-                        type="text"
-                        list="stops"
-                        autocomplete="off"
-                        placeholder="Výchozí zastávka"
-                    >
-                </div>
-
-
-                <button
-                    id="swapButton"
-                    type="button"
-                    class="swapButton"
-                    title="Prohodit zastávky"
-                >
-                    ⇅
-                </button>
+        <input
+            id="from"
+            type="text"
+            list="stops"
+            autocomplete="off"
+        >
 
 
-                <div class="inputGroup">
-                    <label for="to">Kam</label>
+        <!-- CÍLOVÁ ZASTÁVKA -->
 
-                    <input
-                        id="to"
-                        type="text"
-                        list="stops"
-                        autocomplete="off"
-                        placeholder="Cílová zastávka"
-                    >
-                </div>
+        <label for="to">
+            Do
+        </label>
 
-            </div>
-
-
-            <datalist id="stops"></datalist>
+        <input
+            id="to"
+            type="text"
+            list="stops"
+            autocomplete="off"
+        >
 
 
-            <div class="optionsRow">
+        <!-- SEZNAM ZASTÁVEK -->
 
-                <div class="optionGroup">
-
-                    <label for="date">
-                        Datum
-                    </label>
-
-                    <input
-                        type="date"
-                        id="date"
-                    >
-
-                </div>
+        <datalist id="stops"></datalist>
 
 
-                <div class="optionGroup">
+        <!-- PROHOZENÍ -->
 
-                    <label for="time">
-                        Čas
-                    </label>
-
-                    <input
-                        type="time"
-                        id="time"
-                        value="00:00"
-                    >
-
-                </div>
-
-            </div>
-
-
-            <div class="mode">
-
-                <label>
-                    <input
-                        type="radio"
-                        name="mode"
-                        value="departure"
-                        checked
-                    >
-
-                    Odjezdy
-                </label>
-
-
-                <label>
-                    <input
-                        type="radio"
-                        name="mode"
-                        value="arrival"
-                    >
-
-                    Příjezdy
-                </label>
-
-            </div>
-
+        <div class="swapBox">
 
             <button
-                id="searchButton"
+                id="swapButton"
                 type="button"
-                class="searchButton"
             >
-                Vyhledat spojení
+                ⇅ Prohodit zastávky
             </button>
 
         </div>
 
 
-        <div id="results">
+        <!-- DATUM -->
 
-            <div class="resultCard">
+        <label for="date">
+            Datum
+        </label>
 
-                <div class="departureTime">
-                    Připraveno
-                </div>
+        <input
+            type="date"
+            id="date"
+        >
 
-                <p>
-                    Zadejte výchozí a cílovou zastávku
-                    a klikněte na
-                    <strong>Vyhledat spojení</strong>.
-                </p>
 
+        <!-- ČAS -->
+
+        <label for="time">
+            Čas
+        </label>
+
+        <input
+            type="time"
+            id="time"
+        >
+
+
+        <!-- ==================================================
+             REŽIM VYHLEDÁVÁNÍ
+        ================================================== -->
+
+        <div class="mode">
+
+            <label>
+
+                <input
+                    type="radio"
+                    name="mode"
+                    value="departure"
+                    checked
+                >
+
+                Odjezdy
+
+            </label>
+
+
+            <label>
+
+                <input
+                    type="radio"
+                    name="mode"
+                    value="arrival"
+                >
+
+                Příjezdy
+
+            </label>
+
+        </div>
+
+
+        <!-- ==================================================
+             TLAČÍTKO VYHLEDAT
+        ================================================== -->
+
+        <button
+            id="searchButton"
+            type="button"
+        >
+            Vyhledat spojení
+        </button>
+
+    </div>
+
+
+    <!-- ==================================================
+         VÝSLEDKY
+    ================================================== -->
+
+    <div id="results">
+
+        <div class="resultCard">
+
+            <div class="departureTime">
+                Připraveno
             </div>
+
+            <p>
+
+                Zadejte výchozí a cílovou zastávku
+                a klikněte na
+                <strong>
+                    Vyhledat spojení
+                </strong>.
+
+            </p>
 
         </div>
 
     </div>
 
 
+    <!-- ==================================================
+         SCRIPTS
+    ================================================== -->
+
+    <!-- Nejdříve search.js -->
     <script src="search.js"></script>
+
+    <!-- Potom app.js -->
     <script src="app.js"></script>
 
 </body>
