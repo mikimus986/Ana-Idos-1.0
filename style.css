@@ -1,54 +1,46 @@
-/* =====================================================
-   ZÁKLAD
-===================================================== */
-
 * {
     box-sizing: border-box;
 }
 
 body {
     margin: 0;
-    padding: 30px;
-    background: #ffffff;
-    color: #222;
     font-family: Arial, Helvetica, sans-serif;
+    background: #f2f4f7;
+    color: #202124;
 }
 
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
+    width: min(1000px, calc(100% - 30px));
+    margin: 35px auto;
 }
 
 h1 {
-    margin: 0 0 28px 0;
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 44px;
-    font-weight: bold;
+    margin: 0 0 22px;
+    font-size: 32px;
+    font-weight: 700;
 }
 
 
-/* =====================================================
+/* =========================================
    VYHLEDÁVÁNÍ
-===================================================== */
+   ========================================= */
 
 .searchBox {
-    background: #f8f9fa;
-    border: 1px solid #d9dfe5;
+    background: white;
     border-radius: 14px;
     padding: 22px;
-    margin-bottom: 28px;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.10);
 }
 
 
-/* =====================================================
+/* =========================================
    ODKUD / KAM
-===================================================== */
+   ========================================= */
 
-.searchRow {
+.inputRow {
     display: flex;
     align-items: flex-end;
-    gap: 14px;
+    gap: 12px;
 }
 
 .inputGroup {
@@ -58,462 +50,374 @@ h1 {
 .inputGroup label,
 .optionGroup label {
     display: block;
-    margin-bottom: 7px;
+    margin-bottom: 6px;
     font-size: 14px;
-    font-weight: bold;
-    color: #444;
+    font-weight: 600;
 }
 
 .inputGroup input {
     width: 100%;
-    height: 46px;
+    height: 44px;
     padding: 0 13px;
-    border: 1px solid #bfc5ca;
+    border: 1px solid #c8ccd1;
     border-radius: 8px;
     background: white;
-    font-size: 17px;
-    color: #222;
-}
-
-.inputGroup input::placeholder {
-    color: #999;
+    font-size: 16px;
+    outline: none;
 }
 
 .inputGroup input:focus {
-    outline: none;
-    border-color: #2196F3;
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.13);
+    border-color: #1976d2;
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
 }
 
 
-/* =====================================================
+/* =========================================
    PROHOZENÍ
-===================================================== */
+   ========================================= */
 
 .swapButton {
-    width: 46px;
-    height: 46px;
-    flex-shrink: 0;
-
-    border: 1px solid #bfc5ca;
+    width: 44px;
+    height: 44px;
+    border: 1px solid #c8ccd1;
     border-radius: 8px;
-
-    background: white;
-    color: #333;
-
-    font-size: 25px;
+    background: #f7f8fa;
     cursor: pointer;
-
-    transition:
-        background 0.15s,
-        border-color 0.15s;
+    font-size: 22px;
+    transition: 0.15s;
 }
 
 .swapButton:hover {
-    background: #eeeeee;
-    border-color: #999;
+    background: #e9edf2;
 }
 
 
-/* =====================================================
-   DATUM / ČAS / REŽIM / VYHLEDAT
-===================================================== */
+/* =========================================
+   DATUM A ČAS
+   ========================================= */
 
 .optionsRow {
     display: flex;
-    align-items: flex-end;
-    gap: 17px;
-    margin-top: 19px;
+    gap: 18px;
+    margin-top: 18px;
 }
 
-.optionGroup input[type="date"],
-.optionGroup input[type="time"] {
-    height: 42px;
-    padding: 0 9px;
-
-    border: 1px solid #bfc5ca;
-    border-radius: 8px;
-
-    background: white;
-    font-size: 16px;
-}
-
-.optionGroup input[type="date"]:focus,
-.optionGroup input[type="time"]:focus {
-    outline: none;
-    border-color: #2196F3;
-}
-
-
-/* =====================================================
-   ODJEZDY / PŘÍJEZDY
-===================================================== */
-
-.mode {
-    height: 42px;
-
+.optionGroup {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 9px;
+}
 
-    padding: 0 4px;
+.optionGroup label {
+    margin: 0;
+}
+
+.optionGroup input {
+    height: 40px;
+    padding: 0 10px;
+    border: 1px solid #c8ccd1;
+    border-radius: 7px;
+    font-size: 15px;
+    background: white;
+}
+
+
+/* =========================================
+   ODJEZDY / PŘÍJEZDY
+   ========================================= */
+
+.mode {
+    display: flex;
+    gap: 24px;
+    margin-top: 18px;
 }
 
 .mode label {
-    margin: 0;
-    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
     cursor: pointer;
-    white-space: nowrap;
+    font-size: 15px;
 }
 
 .mode input {
-    margin-right: 5px;
+    accent-color: #1976d2;
 }
 
 
-/* =====================================================
-   VYHLEDAT SPOJENÍ
-===================================================== */
+/* =========================================
+   VYHLEDAT
+   ========================================= */
 
 .searchButton {
-    height: 42px;
-    padding: 0 22px;
-
-    border: none;
-    border-radius: 8px;
-
-    background: #2196F3;
+    width: 100%;
+    margin-top: 20px;
+    height: 46px;
+    border: 0;
+    border-radius: 9px;
+    background: #1976d2;
     color: white;
-
     font-size: 16px;
-    font-weight: bold;
-
+    font-weight: 700;
     cursor: pointer;
-
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
-
-    transition:
-        background 0.15s,
-        transform 0.1s;
+    transition: 0.15s;
 }
 
 .searchButton:hover {
-    background: #1976D2;
+    background: #1565c0;
 }
 
 .searchButton:active {
-    transform: translateY(1px);
+    transform: scale(0.99);
 }
 
 
-/* =====================================================
+/* =========================================
    VÝSLEDKY
-===================================================== */
+   ========================================= */
 
 #results {
-    width: 100%;
+    margin-top: 22px;
 }
 
 .resultCard {
-    position: relative;
-
-    margin-bottom: 16px;
-
     background: white;
-
-    border: 1px solid #d5d5d5;
-    border-radius: 5px;
-
+    border-radius: 13px;
+    margin-bottom: 16px;
+    padding: 0;
     overflow: hidden;
-
-    box-shadow:
-        0 2px 6px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.09);
 }
 
 
-/* =====================================================
-   BAREVNÝ PRUH LINKY + SMĚR
-===================================================== */
+/* =========================================
+   HLAVIČKA LINKY
+   ========================================= */
 
 .resultHeader {
-    min-height: 62px;
+    min-height: 52px;
+    padding: 10px 15px;
 
     display: flex;
     align-items: center;
-
-    padding: 9px 15px;
+    gap: 10px;
 
     color: white;
 }
 
 .routeIcon {
-    display: inline-flex;
-    align-items: center;
-
-    font-size: 31px;
-
-    margin-right: 12px;
+    font-size: 24px;
 }
 
 .routeNumber {
-    font-size: 29px;
-    font-weight: bold;
-    line-height: 1;
+    font-size: 21px;
 }
 
 .routeDirection {
-    margin-left: 20px;
-    padding-left: 20px;
-
-    border-left: 1px solid rgba(255, 255, 255, 0.55);
-
-    font-size: 17px;
-    font-weight: normal;
+    margin-left: auto;
+    font-size: 14px;
 }
 
 
-/* =====================================================
-   ČASY
-===================================================== */
+/* =========================================
+   HLAVNÍ ČASY
+   ========================================= */
 
 .resultMain {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 28px;
 
-    gap: 55px;
-
-    padding: 28px 20px;
+    padding: 20px 15px;
 }
 
 .mainStop {
-    min-width: 190px;
-
     text-align: center;
+    min-width: 130px;
 }
 
 .mainTime {
-    font-size: 35px;
-    font-weight: bold;
-    color: #222;
+    font-size: 26px;
+    font-weight: 700;
 }
 
 .mainStopName {
-    margin-top: 6px;
-
-    font-size: 17px;
-    color: #444;
+    margin-top: 5px;
+    font-size: 14px;
+    color: #555;
 }
 
 .routeArrow {
-    font-size: 38px;
+    font-size: 28px;
     color: #777;
 }
 
 
-/* =====================================================
+/* =========================================
    ZASTÁVKY
-===================================================== */
+   ========================================= */
 
 .resultStops {
-    border-top: 1px solid #ddd;
-
-    padding: 7px 15px;
+    padding: 4px 18px 12px;
 }
 
 .stopRow {
-    display: flex;
+    display: grid;
+    grid-template-columns: 14px 1fr auto;
     align-items: center;
+    gap: 10px;
 
-    min-height: 36px;
-
-    border-bottom: 1px solid #eeeeee;
-}
-
-.stopRow:last-child {
-    border-bottom: none;
+    min-height: 35px;
+    border-bottom: 1px solid #eee;
 }
 
 .stopDot {
-    width: 11px;
-    height: 11px;
-
-    margin-right: 12px;
-
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
-
-    flex-shrink: 0;
+    display: block;
 }
 
 .stopName {
-    flex: 1;
-
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .stopTime {
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 
-/* =====================================================
+/* =========================================
    ZOBRAZIT ZASTÁVKY
-===================================================== */
+   ========================================= */
 
 .stopsToggle {
-    width: 100%;
+    width: calc(100% - 30px);
+    margin: 5px 15px 15px;
 
-    padding: 10px;
+    height: 38px;
 
-    border: none;
-    border-top: 1px solid #ddd;
+    border: 1px solid #d4d8dd;
+    border-radius: 7px;
 
-    background: #f4f4f4;
-
-    color: #333;
-
-    font-size: 15px;
+    background: #f7f8fa;
 
     cursor: pointer;
+
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .stopsToggle:hover {
-    background: #e9e9e9;
+    background: #eceff2;
 }
 
 
-/* =====================================================
-   HLÁŠKY
-===================================================== */
+/* =========================================
+   PŘESTUP
+   ========================================= */
 
-.messageCard {
-    padding: 18px 20px;
-
-    font-size: 17px;
+.transferPart {
+    padding-bottom: 4px;
 }
 
-.messageCard p {
-    margin-bottom: 0;
-}
-
-.errorCard {
-    padding: 18px 20px;
-
-    border-left: 6px solid #e53935;
-}
-
-
-/* =====================================================
-   VYHLEDÁVÁNÍ
-===================================================== */
-
-.searchLoading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 10px;
-
-    min-height: 80px;
-
-    font-size: 17px;
+.transferTitle {
+    padding: 13px 15px 8px;
+    font-size: 14px;
+    font-weight: 700;
     color: #555;
 }
 
-.loadingSpinner {
-    width: 20px;
-    height: 20px;
+.transferStop {
+    margin: 5px 15px 12px;
+    padding: 11px 13px;
 
-    border: 3px solid #ddd;
-    border-top-color: #2196F3;
+    border-radius: 8px;
 
-    border-radius: 50%;
+    background: #f0f2f4;
 
-    animation: loadingSpin 0.8s linear infinite;
+    font-size: 14px;
 }
 
-@keyframes loadingSpin {
-
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
+.transferStop span {
+    margin-right: 5px;
 }
 
 
-/* =====================================================
+/* =========================================
+   PŘIPRAVENO / CHYBA
+   ========================================= */
+
+.departureTime {
+    padding: 15px;
+    background: #1976d2;
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.resultCard > p {
+    padding: 0 15px 15px;
+}
+
+
+/* =========================================
    MOBIL
-===================================================== */
+   ========================================= */
 
-@media (max-width: 750px) {
+@media (max-width: 700px) {
 
-    body {
-        padding: 15px;
+    .container {
+        width: calc(100% - 20px);
+        margin: 15px auto;
     }
 
     h1 {
-        font-size: 34px;
-        margin-bottom: 20px;
+        font-size: 25px;
     }
 
-    .searchBox {
-        padding: 16px;
-    }
-
-    .searchRow {
+    .inputRow {
         flex-direction: column;
         align-items: stretch;
     }
 
     .swapButton {
-        align-self: center;
+        width: 100%;
     }
 
     .optionsRow {
-        flex-wrap: wrap;
-        align-items: flex-end;
+        flex-direction: column;
+        gap: 12px;
     }
 
-    .resultHeader {
-        min-height: 55px;
+    .optionGroup {
+        justify-content: space-between;
     }
 
-    .routeIcon {
-        font-size: 27px;
-    }
-
-    .routeNumber {
-        font-size: 25px;
-    }
-
-    .routeDirection {
-        margin-left: 12px;
-        padding-left: 12px;
-        font-size: 14px;
+    .optionGroup input {
+        flex: 1;
     }
 
     .resultMain {
-        gap: 15px;
-        padding: 22px 8px;
+        gap: 10px;
     }
 
     .mainStop {
         min-width: 0;
+        flex: 1;
     }
 
     .mainTime {
-        font-size: 27px;
+        font-size: 22px;
     }
 
     .mainStopName {
-        font-size: 14px;
+        font-size: 13px;
     }
 
-    .routeArrow {
-        font-size: 27px;
+    .routeDirection {
+        font-size: 12px;
     }
 }
