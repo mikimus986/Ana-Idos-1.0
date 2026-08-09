@@ -35,7 +35,7 @@ window.searchTimetable = (() => {
 
 
     // =====================================================
-    // ČAS
+    // ČAS → MINUTY
     // =====================================================
 
     function timeToMinutes(time) {
@@ -44,40 +44,58 @@ window.searchTimetable = (() => {
             return 0;
         }
 
-        const parts = String(time).split(":");
+        const parts =
+            String(time).trim().split(":");
 
         if (parts.length !== 2) {
             return 0;
         }
 
+        const hours =
+            Number(parts[0]);
+
+        const minutes =
+            Number(parts[1]);
+
+        if (
+            !Number.isFinite(hours) ||
+            !Number.isFinite(minutes)
+        ) {
+            return 0;
+        }
+
         return (
-            Number(parts[0]) * 60 +
-            Number(parts[1])
+            hours * 60 +
+            minutes
         );
     }
 
+
+    // =====================================================
+    // MINUTY → ČAS
+    // =====================================================
 
     function minutesToTime(minutes) {
 
         minutes =
             ((minutes % 1440) + 1440) % 1440;
 
-        const h =
+        const hours =
             Math.floor(minutes / 60);
 
-        const m =
+        const mins =
             minutes % 60;
 
         return (
-            String(h).padStart(2, "0") +
+            String(hours).padStart(2, "0") +
             ":" +
-            String(m).padStart(2, "0")
+            String(mins).padStart(2, "0")
         );
     }
 
 
     // =====================================================
-    // NORMALIZACE ZASTÁVKY
+    // NORMALIZACE NÁZVU ZASTÁVKY
     // =====================================================
 
     function normalizeStop(name) {
@@ -92,25 +110,56 @@ window.searchTimetable = (() => {
     // =====================================================
     // ODJEZD
     //
-    // 21
-    // 41S
+    // Podporuje:
+    //
+    // 6
+    // 36
+    // "36"
+    // "36S"
+    //
+    // S = spoj končící na Sminov, u lávky
     // =====================================================
 
     function parseDeparture(value) {
 
+        // číslo
+        if (typeof value === "number") {
+
+            if (
+                !Number.isFinite(value) ||
+                value < 0 ||
+                value > 59
+            ) {
+                return null;
+            }
+
+            return {
+                minute: value,
+                isShortTrip: false
+            };
+        }
+
+
+        // text
         const text =
-            String(value).trim();
+            String(value)
+                .trim()
+                .toUpperCase();
+
 
         const isShortTrip =
-            text.toUpperCase().endsWith("S");
+            text.endsWith("S");
+
 
         const numberText =
             isShortTrip
                 ? text.slice(0, -1)
                 : text;
 
+
         const minute =
             Number(numberText);
+
 
         if (
             !Number.isFinite(minute) ||
@@ -120,15 +169,20 @@ window.searchTimetable = (() => {
             return null;
         }
 
+
         return {
-            minute,
-            isShortTrip
+
+            minute:
+                minute,
+
+            isShortTrip:
+                isShortTrip
         };
     }
 
 
     // =====================================================
-    // VYTVOŘENÍ SPOJŮ
+    // VYTVOŘENÍ VŠECH SPOJŮ JEDNÉHO SMĚRU
     // =====================================================
 
     function createTrips(
@@ -139,24 +193,52 @@ window.searchTimetable = (() => {
 
         const trips = [];
 
-        // ochrana proti špatnému názvu dne
+
+        // =================================================
+        // JÍZDNÍ ŘÁD PRO DANÝ DEN
+        // =================================================
+
         let timetable =
             direction[dayType];
 
+
+        // pojistky
         if (!timetable) {
 
-            if (dayType === "weekend") {
-                timetable =
-                    direction.weekends;
-            }
+            if (
+                dayType === "weekday" ||
+                dayType === "workdays" ||
+                dayType === "weekdays"
+            ) {
 
-            if (dayType === "weekday") {
                 timetable =
                     direction.weekdays;
             }
+
+
+            if (
+                dayType === "weekend" ||
+                dayType === "weekends"
+            ) {
+
+                timetable =
+                    direction.weekends;
+            }
         }
 
-        if (!timetable) {
+
+        if (
+            !timetable ||
+            typeof timetable !== "object"
+        ) {
+
+            console.warn(
+                "Chybí jízdní řád:",
+                line,
+                direction.id,
+                dayType
+            );
+
             return trips;
         }
 
@@ -166,13 +248,28 @@ window.searchTimetable = (() => {
         // =================================================
 
         for (
-            const hour of Object.keys(timetable)
+            const hourKey
+            of Object.keys(timetable)
         ) {
 
-            const departures =
-                timetable[hour];
+            const hour =
+                Number(hourKey);
 
-            if (!Array.isArray(departures)) {
+
+            if (
+                !Number.isFinite(hour)
+            ) {
+                continue;
+            }
+
+
+            const departures =
+                timetable[hourKey];
+
+
+            if (
+                !Array.isArray(departures)
+            ) {
                 continue;
             }
 
@@ -191,29 +288,44 @@ window.searchTimetable = (() => {
                         departureValue
                     );
 
+
                 if (!parsed) {
                     continue;
                 }
 
 
                 const firstTime =
-                    Number(hour) * 60 +
+                    hour * 60 +
                     parsed.minute;
 
 
                 // =================================================
-                // CELÁ TRASA
+                // VÝCHOZÍ CELÁ TRASA
                 // =================================================
 
                 let stopCount =
-                    direction.stops.length;
+                    Array.isArray(direction.stops)
+                        ? direction.stops.length
+                        : 0;
+
 
                 let destination =
-                    direction.destination;
+                    direction.destination ||
+                    (
+                        direction.stops &&
+                        direction.stops.length
+                            ? direction.stops[
+                                direction.stops.length - 1
+                              ]
+                            : ""
+                    );
 
 
                 // =================================================
                 // SPOJ S
+                //
+                // Končí na:
+                // Sminov, u lávky
                 // =================================================
 
                 if (
@@ -237,6 +349,7 @@ window.searchTimetable = (() => {
                         stopCount =
                             shortIndex + 1;
 
+
                         destination =
                             "Sminov, u lávky";
                     }
@@ -259,19 +372,30 @@ window.searchTimetable = (() => {
                     const stopName =
                         direction.stops[i];
 
-                    const travelTime =
+
+                    if (!stopName) {
+                        continue;
+                    }
+
+
+                    let travelTime =
                         Number(
-                            direction.travelTimes[i]
+                            direction.travelTimes?.[i]
                         );
 
 
+                    // Pokud je čas špatně zadaný,
+                    // první zastávka je 0 minut.
                     if (
-                        !stopName ||
                         !Number.isFinite(
                             travelTime
                         )
                     ) {
-                        continue;
+
+                        travelTime =
+                            i === 0
+                                ? 0
+                                : 0;
                     }
 
 
@@ -285,16 +409,20 @@ window.searchTimetable = (() => {
                         name:
                             stopName,
 
+                        minutes:
+                            absoluteTime,
+
                         time:
                             minutesToTime(
                                 absoluteTime
-                            ),
-
-                        minutes:
-                            absoluteTime
+                            )
                     });
                 }
 
+
+                // =================================================
+                // SPOJ MUSÍ MÍT ALESPOŇ 2 ZASTÁVKY
+                // =================================================
 
                 if (
                     stops.length < 2
@@ -302,6 +430,10 @@ window.searchTimetable = (() => {
                     continue;
                 }
 
+
+                // =================================================
+                // SPOJ
+                // =================================================
 
                 trips.push({
 
@@ -332,7 +464,7 @@ window.searchTimetable = (() => {
 
 
     // =====================================================
-    // NAČTENÍ SPOJŮ LINKY
+    // NAČTENÍ SPOJŮ JEDNÉ LINKY
     // =====================================================
 
     async function getTrips(
@@ -341,15 +473,43 @@ window.searchTimetable = (() => {
     ) {
 
         const timetable =
-            await loadTimetable(line);
+            await loadTimetable(
+                line
+            );
+
 
         const trips = [];
 
 
+        if (
+            !timetable ||
+            !Array.isArray(
+                timetable.directions
+            )
+        ) {
+
+            console.warn(
+                `Linka ${line} nemá directions.`
+            );
+
+            return trips;
+        }
+
+
         for (
             const direction
-            of timetable.directions || []
+            of timetable.directions
         ) {
+
+            if (
+                !direction ||
+                !Array.isArray(
+                    direction.stops
+                )
+            ) {
+                continue;
+            }
+
 
             trips.push(
                 ...createTrips(
@@ -390,6 +550,7 @@ window.searchTimetable = (() => {
                         dayType
                     );
 
+
                 allTrips.push(
                     ...trips
                 );
@@ -415,7 +576,7 @@ window.searchTimetable = (() => {
 
 
     // =====================================================
-    // NAJDI ÚSEK MEZI ZASTÁVKAMI
+    // NAJDE ÚSEK MEZI DVĚMA ZASTÁVKAMI
     // =====================================================
 
     function getSegment(
@@ -424,13 +585,35 @@ window.searchTimetable = (() => {
         to
     ) {
 
+        if (
+            !trip ||
+            !Array.isArray(
+                trip.stops
+            )
+        ) {
+            return null;
+        }
+
+
+        const fromNormalized =
+            normalizeStop(
+                from
+            );
+
+
+        const toNormalized =
+            normalizeStop(
+                to
+            );
+
+
         const fromIndex =
             trip.stops.findIndex(
                 stop =>
                     normalizeStop(
                         stop.name
                     ) ===
-                    normalizeStop(from)
+                    fromNormalized
             );
 
 
@@ -440,7 +623,7 @@ window.searchTimetable = (() => {
                     normalizeStop(
                         stop.name
                     ) ===
-                    normalizeStop(to)
+                    toNormalized
             );
 
 
@@ -452,7 +635,7 @@ window.searchTimetable = (() => {
         }
 
 
-        // nesmí jet proti směru
+        // opačný směr
         if (
             fromIndex >= toIndex
         ) {
@@ -460,33 +643,41 @@ window.searchTimetable = (() => {
         }
 
 
+        const segmentStops =
+            trip.stops.slice(
+                fromIndex,
+                toIndex + 1
+            );
+
+
+        const departureStop =
+            trip.stops[
+                fromIndex
+            ];
+
+
+        const arrivalStop =
+            trip.stops[
+                toIndex
+            ];
+
+
         return {
 
             stops:
-                trip.stops.slice(
-                    fromIndex,
-                    toIndex + 1
-                ),
+                segmentStops,
 
             departure:
-                trip.stops[
-                    fromIndex
-                ].time,
+                departureStop.time,
 
             departureMinutes:
-                trip.stops[
-                    fromIndex
-                ].minutes,
+                departureStop.minutes,
 
             arrival:
-                trip.stops[
-                    toIndex
-                ].time,
+                arrivalStop.time,
 
             arrivalMinutes:
-                trip.stops[
-                    toIndex
-                ].minutes
+                arrivalStop.minutes
         };
     }
 
@@ -524,9 +715,9 @@ window.searchTimetable = (() => {
             }
 
 
-            // =============================================
+            // =================================================
             // ODJEZDY
-            // =============================================
+            // =================================================
 
             if (
                 mode === "departure"
@@ -541,9 +732,9 @@ window.searchTimetable = (() => {
             }
 
 
-            // =============================================
+            // =================================================
             // PŘÍJEZDY
-            // =============================================
+            // =================================================
 
             if (
                 mode === "arrival"
@@ -604,7 +795,9 @@ window.searchTimetable = (() => {
 
 
     // =====================================================
-    // DUPLICITY
+    // ODSTRANĚNÍ DUPLICIT
+    //
+    // Stejný spoj v 6:44 se zobrazí pouze jednou.
     // =====================================================
 
     function removeDuplicates(
@@ -613,6 +806,7 @@ window.searchTimetable = (() => {
 
         const seen =
             new Set();
+
 
         const result = [];
 
@@ -642,7 +836,10 @@ window.searchTimetable = (() => {
             }
 
 
-            seen.add(key);
+            seen.add(
+                key
+            );
+
 
             result.push(
                 connection
@@ -668,14 +865,39 @@ window.searchTimetable = (() => {
     ) {
 
         console.log(
-            "VYHLEDÁVÁNÍ:",
+            "=============================="
+        );
+
+
+        console.log(
+            "HLEDÁM:",
             from,
             "→",
-            to,
-            afterTime,
+            to
+        );
+
+
+        console.log(
+            "ČAS:",
+            afterTime
+        );
+
+
+        console.log(
+            "DEN:",
             dayType
         );
 
+
+        console.log(
+            "LINKY:",
+            lineNumbers
+        );
+
+
+        // =================================================
+        // KONTROLA
+        // =================================================
 
         if (
             !from ||
@@ -686,12 +908,14 @@ window.searchTimetable = (() => {
 
 
         if (
-            !Array.isArray(lineNumbers) ||
+            !Array.isArray(
+                lineNumbers
+            ) ||
             lineNumbers.length === 0
         ) {
 
             console.error(
-                "Nejsou předány žádné linky."
+                "Nebyly předány žádné linky."
             );
 
             return [];
@@ -700,12 +924,13 @@ window.searchTimetable = (() => {
 
         const wantedTime =
             timeToMinutes(
-                afterTime
+                afterTime ||
+                "00:00"
             );
 
 
         // =================================================
-        // NAČTENÍ
+        // NAČTENÍ VŠECH SPOJŮ
         // =================================================
 
         const allTrips =
@@ -715,12 +940,18 @@ window.searchTimetable = (() => {
             );
 
 
+        console.log(
+            "NAČTENÉ SPOJE:",
+            allTrips.length
+        );
+
+
         if (
             allTrips.length === 0
         ) {
 
             console.error(
-                "Nebyl načten žádný spoj."
+                "Nebyly načteny žádné spoje."
             );
 
             return [];
@@ -741,6 +972,10 @@ window.searchTimetable = (() => {
             );
 
 
+        // =================================================
+        // DUPLICITY
+        // =================================================
+
         direct =
             removeDuplicates(
                 direct
@@ -752,21 +987,21 @@ window.searchTimetable = (() => {
         // =================================================
 
         if (
-            mode === "departure"
+            mode === "arrival"
         ) {
 
             direct.sort(
                 (a, b) =>
-                    a.departureMinutes -
-                    b.departureMinutes
+                    b.arrivalMinutes -
+                    a.arrivalMinutes
             );
 
         } else {
 
             direct.sort(
                 (a, b) =>
-                    b.arrivalMinutes -
-                    a.arrivalMinutes
+                    a.departureMinutes -
+                    b.departureMinutes
             );
         }
 
@@ -778,10 +1013,7 @@ window.searchTimetable = (() => {
 
 
         // =================================================
-        // ZATÍM VRACÍME PŘÍMÉ
-        //
-        // Přestupy přidáme až když bude jisté,
-        // že přímé spoje fungují.
+        // VÝSLEDKY
         // =================================================
 
         return direct.slice(
@@ -797,11 +1029,17 @@ window.searchTimetable = (() => {
 
     return {
 
-        loadTimetable,
+        loadTimetable:
 
-        findConnections,
+            loadTimetable,
 
-        findDirectConnections
+        findConnections:
+
+            findConnections,
+
+        findDirectConnections:
+
+            findDirectConnections
 
     };
 
