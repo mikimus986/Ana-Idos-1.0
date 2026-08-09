@@ -1063,6 +1063,455 @@ window.searchTimetable = (() => {
     // Není zde pevný limit počtu přestupů.
     // =========================================================
 
-    function findTransfer
+    function findTransferConnections(
+        allTrips,
+        from,
+        to,
+        afterTime
+    ) {
+
+        const wantedTime =
+            timeToMinutes(
+                afterTime
+            );
+
+
+        const results = [];
+
+
+        // =====================================================
+        // STAV VYHLEDÁVÁNÍ
+        // =====================================================
+
+        const queue = [];
+
+
+        // =====================================================
+        // PRVNÍ SPOJE Z VÝCHOZÍ ZASTÁVKY
+        // =====================================================
+
+        for (
+            const trip of allTrips
+        ) {
+
+            const fromIndex =
+                trip.stops.findIndex(
+                    stop =>
+                        normalizeStop(
+                            stop.name
+                        ) ===
+                        normalizeStop(
+                            from
+                        )
+                );
+
+
+            if (
+                fromIndex === -1
+            ) {
+                continue;
+            }
+
+
+            const departure =
+                trip.stops[
+                    fromIndex
+                ];
+
+
+            if (
+                departure.minutes <
+                wantedTime
+            ) {
+                continue;
+            }
+
+
+            for (
+                let i =
+                    fromIndex + 1;
+
+                i <
+                trip.stops.length;
+
+                i++
+            ) {
+
+                const stop =
+                    trip.stops[i];
+
+
+                queue.push({
+
+                    legs: [{
+
+                        trip,
+
+                        from,
+
+                        to:
+                            stop.name,
+
+                        fromIndex,
+
+                        toIndex:
+                            i,
+
+                        departure:
+                            departure.time,
+
+                        departureMinutes:
+                            departure.minutes,
+
+                        arrival:
+                            stop.time,
+
+                        arrivalMinutes:
+                            stop.minutes,
+
+                        stops:
+                            trip.stops.slice(
+                                fromIndex,
+                                i + 1
+                            )
+                    }],
+
+                    currentStop:
+                        stop.name,
+
+                    currentTime:
+                        stop.minutes,
+
+                    usedLines: [
+                        trip.line
+                    ]
+                });
+            }
+        }
+
+
+        // =====================================================
+        // OCHRANA PROTI ZACYKLENÍ
+        // =====================================================
+
+        const visitedStates =
+            new Set();
+
+
+        while (
+            queue.length > 0
+        ) {
+
+            const state =
+                queue.shift();
+
+
+            const legs =
+                state.legs;
+
+
+            // =================================================
+            // DOSÁHLI JSME CÍLE
+            // =================================================
+
+            if (
+                normalizeStop(
+                    state.currentStop
+                ) ===
+                normalizeStop(to)
+            ) {
+
+                if (
+                    legs.length >= 2
+                ) {
+
+                    const connection =
+                        createTransferConnection(
+                            legs
+                        );
+
+
+                    if (connection) {
+
+                        results.push(
+                            connection
+                        );
+                    }
+                }
+
+                continue;
+            }
+
+
+            // =================================================
+            // STAV CESTY
+            // =================================================
+
+            const stateKey = [
+
+                normalizeStop(
+                    state.currentStop
+                ),
+
+                state.currentTime,
+
+                state.usedLines.join(",")
+
+            ].join("|");
+
+
+            if (
+                visitedStates.has(
+                    stateKey
+                )
+            ) {
+                continue;
+            }
+
+
+            visitedStates.add(
+                stateKey
+            );
+
+
+            // =================================================
+            // DALŠÍ SPOJE
+            // =================================================
+
+            const nextLegs =
+                getPossibleNextLegs(
+
+                    allTrips,
+
+                    state.currentStop,
+
+                    state.currentTime,
+
+                    state.usedLines,
+
+                    to
+                );
+
+
+            for (
+                const next of nextLegs
+            ) {
+
+                // =================================================
+                // OCHRANA PROTI OPAKOVÁNÍ LINKY
+                // =================================================
+
+                if (
+                    state.usedLines.includes(
+                        next.trip.line
+                    )
+                ) {
+                    continue;
+                }
+
+
+                queue.push({
+
+                    legs: [
+                        ...legs,
+                        next
+                    ],
+
+                    currentStop:
+                        next.to,
+
+                    currentTime:
+                        next.arrivalMinutes,
+
+                    usedLines: [
+                        ...state.usedLines,
+                        next.trip.line
+                    ]
+                });
+            }
+        }
+
+
+        return removeDuplicateConnections(
+            results
+        );
+    }
+
+
+    // =========================================================
+    // HLAVNÍ VYHLEDÁVÁNÍ
+    // =========================================================
+
+    async function findConnections(
+        from,
+        to,
+        afterTime,
+        dayType,
+        lineNumbers
+    ) {
+
+        // =====================================================
+        // KONTROLA
+        // =====================================================
+
+        if (
+            !from ||
+            !to ||
+            !Array.isArray(lineNumbers)
+        ) {
+            return [];
+        }
+
+
+        if (
+            normalizeStop(from) ===
+            normalizeStop(to)
+        ) {
+            return [];
+        }
+
+
+        // =====================================================
+        // NAČTENÍ VŠECH SPOJŮ
+        // =====================================================
+
+        const allTrips =
+            await loadAllTrips(
+                lineNumbers,
+                dayType
+            );
+
+
+        // =====================================================
+        // 0 PŘESTUPŮ
+        //
+        // PŘÍMÉ SPOJE MAJÍ PŘEDNOST.
+        // =====================================================
+
+        const direct =
+            await findDirectConnections(
+                from,
+                to,
+                afterTime,
+                dayType,
+                lineNumbers
+            );
+
+
+        if (
+            direct.length > 0
+        ) {
+
+            return direct.slice(
+                0,
+                30
+            );
+        }
+
+
+        // =====================================================
+        // PŘESTUPNÍ CESTY
+        //
+        // Počet přestupů není omezený.
+        // =====================================================
+
+        const transfers =
+            findTransferConnections(
+                allTrips,
+                from,
+                to,
+                afterTime
+            );
+
+
+        // =====================================================
+        // ODSTRANĚNÍ DUPLICIT
+        // =====================================================
+
+        const unique =
+            removeDuplicateConnections(
+                transfers
+            );
+
+
+        // =====================================================
+        // SEŘAZENÍ
+        //
+        // Nejdříve:
+        // - méně přestupů
+        // - potom dřívější odjezd
+        // - potom dřívější příjezd
+        // =====================================================
+
+        unique.sort(
+            (a, b) => {
+
+                const aTransfers =
+                    Math.max(
+                        0,
+                        (a.legs?.length || 1) - 1
+                    );
+
+                const bTransfers =
+                    Math.max(
+                        0,
+                        (b.legs?.length || 1) - 1
+                    );
+
+
+                if (
+                    aTransfers !==
+                    bTransfers
+                ) {
+
+                    return (
+                        aTransfers -
+                        bTransfers
+                    );
+                }
+
+
+                if (
+                    a.departureMinutes !==
+                    b.departureMinutes
+                ) {
+
+                    return (
+                        a.departureMinutes -
+                        b.departureMinutes
+                    );
+                }
+
+
+                return (
+                    a.arrivalMinutes -
+                    b.arrivalMinutes
+                );
+            }
+        );
+
+
+        return unique.slice(
+            0,
+            30
+        );
+    }
+
+
+    // =========================================================
+    // EXPORT
+    // =========================================================
+
+    return {
+
+        loadTimetable,
+
+        findConnections,
+
+        findDirectConnections
+
+    };
+
+})();
 
                        
