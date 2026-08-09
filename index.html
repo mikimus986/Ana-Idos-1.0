@@ -2,102 +2,117 @@
 <html lang="cs">
 
 <head>
+
     <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <title>Vyhledávání spojení</title>
+    <title>Jízdní řády</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
+
 
 <body>
 
-    <div class="container">
+    <main class="container">
 
         <h1>Vyhledávání spojení</h1>
 
+
+        <!-- ========================================= -->
+        <!-- VYHLEDÁVÁNÍ -->
+        <!-- ========================================= -->
+
         <div class="searchBox">
 
-            <div class="inputRow">
 
-                <div class="inputGroup">
-                    <label for="from">Odkud</label>
+            <!-- VÝCHOZÍ ZASTÁVKA -->
 
-                    <input
-                        id="from"
-                        type="text"
-                        list="stops"
-                        autocomplete="off"
-                        placeholder="Výchozí zastávka"
-                    >
-                </div>
+            <label for="from">
+                Z výchozí zastávky
+            </label>
 
-
-                <button
-                    id="swapButton"
-                    type="button"
-                    class="swapButton"
-                    title="Prohodit zastávky"
-                >
-                    ⇅
-                </button>
+            <input
+                id="from"
+                type="text"
+                list="stops"
+                autocomplete="off"
+                placeholder="Např. Anské náměstí"
+            >
 
 
-                <div class="inputGroup">
-                    <label for="to">Kam</label>
+            <!-- CÍLOVÁ ZASTÁVKA -->
 
-                    <input
-                        id="to"
-                        type="text"
-                        list="stops"
-                        autocomplete="off"
-                        placeholder="Cílová zastávka"
-                    >
-                </div>
+            <label for="to">
+                Do cílové zastávky
+            </label>
 
-            </div>
+            <input
+                id="to"
+                type="text"
+                list="stops"
+                autocomplete="off"
+                placeholder="Např. Poliklinika Ansko"
+            >
 
+
+            <!-- NABÍDKA ZASTÁVEK -->
 
             <datalist id="stops"></datalist>
 
 
-            <div class="optionsRow">
+            <!-- PROHOZENÍ -->
 
-                <div class="optionGroup">
+            <div class="swapBox">
 
-                    <label for="date">
-                        Datum
-                    </label>
-
-                    <input
-                        type="date"
-                        id="date"
-                    >
-
-                </div>
-
-
-                <div class="optionGroup">
-
-                    <label for="time">
-                        Čas
-                    </label>
-
-                    <input
-                        type="time"
-                        id="time"
-                        value="00:00"
-                    >
-
-                </div>
+                <button
+                    type="button"
+                    id="swapButton"
+                >
+                    ⇅ Prohodit zastávky
+                </button>
 
             </div>
 
 
+            <!-- DATUM -->
+
+            <label for="date">
+                Datum
+            </label>
+
+            <input
+                type="date"
+                id="date"
+            >
+
+
+            <!-- ČAS -->
+
+            <label for="time">
+                Čas
+            </label>
+
+            <input
+                type="time"
+                id="time"
+            >
+
+
+            <!-- REŽIM -->
+
             <div class="mode">
 
                 <label>
+
                     <input
                         type="radio"
                         name="mode"
@@ -106,10 +121,12 @@
                     >
 
                     Odjezdy
+
                 </label>
 
 
                 <label>
+
                     <input
                         type="radio"
                         name="mode"
@@ -117,21 +134,27 @@
                     >
 
                     Příjezdy
+
                 </label>
 
             </div>
 
 
+            <!-- VYHLEDAT -->
+
             <button
-                id="searchButton"
                 type="button"
-                class="searchButton"
+                id="searchButton"
             >
                 Vyhledat spojení
             </button>
 
         </div>
 
+
+        <!-- ========================================= -->
+        <!-- VÝSLEDKY -->
+        <!-- ========================================= -->
 
         <div id="results">
 
@@ -142,20 +165,35 @@
                 </div>
 
                 <p>
+
                     Zadejte výchozí a cílovou zastávku
                     a klikněte na
-                    <strong>Vyhledat spojení</strong>.
+                    <strong>
+                        Vyhledat spojení
+                    </strong>.
+
                 </p>
 
             </div>
 
         </div>
 
-    </div>
+    </main>
 
+
+    <!-- ========================================= -->
+    <!-- SCRIPTS -->
+    <!-- ========================================= -->
+
+    <!-- NEJDŘÍVE SEARCH -->
 
     <script src="search.js"></script>
+
+
+    <!-- POTOM APP -->
+
     <script src="app.js"></script>
+
 
 </body>
 
