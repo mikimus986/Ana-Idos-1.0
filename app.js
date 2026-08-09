@@ -1,360 +1,271 @@
-// app.js
+document.addEventListener("DOMContentLoaded", async () => {
 
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
+    const fromInput = document.getElementById("from");
+    const toInput = document.getElementById("to");
+    const dateInput = document.getElementById("date");
+    const timeInput = document.getElementById("time");
+    const searchButton = document.getElementById("searchButton");
+    const swapButton = document.getElementById("swapButton");
+    const resultsContainer = document.getElementById("results");
+    const stopsList = document.getElementById("stops");
 
-        const fromInput =
-            document.getElementById("from");
+    // =====================================================
+    // KONTROLA
+    // =====================================================
 
-        const toInput =
-            document.getElementById("to");
+    if (
+        !fromInput ||
+        !toInput ||
+        !searchButton ||
+        !resultsContainer
+    ) {
+        console.error("Chybí HTML prvky pro vyhledávání.");
+        return;
+    }
 
-        const dateInput =
-            document.getElementById("date");
+    if (!window.searchTimetable) {
+        console.error("search.js nebyl načten.");
+        resultsContainer.innerHTML = `
+            <div class="resultCard errorCard">
+                <strong>Chyba:</strong>
+                search.js nebyl načten.
+            </div>
+        `;
+        return;
+    }
 
-        const timeInput =
-            document.getElementById("time");
+    // =====================================================
+    // ROUTES
+    // =====================================================
 
-        const searchButton =
-            document.getElementById("searchButton");
+    let routes = [];
 
-        const swapButton =
-            document.getElementById("swapButton");
+    try {
 
-        const resultsContainer =
-            document.getElementById("results");
+        const response =
+            await fetch("data/routes.json");
 
-        const stopsList =
-            document.getElementById("stops");
+        if (!response.ok) {
+            throw new Error(
+                `routes.json HTTP ${response.status}`
+            );
+        }
 
+        routes = await response.json();
 
-        // =====================================================
-        // KONTROLA
-        // =====================================================
+        console.log("Načtené linky:", routes);
 
-        if (
-            !fromInput ||
-            !toInput ||
-            !searchButton ||
-            !resultsContainer
-        ) {
+    } catch (error) {
 
-            console.error(
-                "Chybí některý HTML prvek."
+        console.error(
+            "Nepodařilo se načíst routes.json:",
+            error
+        );
+
+        resultsContainer.innerHTML = `
+            <div class="resultCard errorCard">
+                <strong>Nepodařilo se načíst linky.</strong>
+                <p>${error.message}</p>
+            </div>
+        `;
+
+        return;
+    }
+
+    // =====================================================
+    // INFORMACE O LINCE
+    // =====================================================
+
+    function getRouteInfo(line) {
+
+        const route =
+            routes.find(
+                item =>
+                    String(item.line).trim() ===
+                    String(line).trim()
             );
 
+        if (route) {
+            return route;
+        }
+
+        return {
+            line: String(line),
+            type: "bus",
+            icon: "🚌",
+            color: "#2196F3"
+        };
+    }
+
+    // =====================================================
+    // NAČTENÍ VŠECH ZASTÁVEK
+    // =====================================================
+
+    async function loadAllStops() {
+
+        if (!stopsList) {
             return;
         }
 
+        const stops =
+            new Set();
 
-        if (
-            !window.searchTimetable
-        ) {
+        for (const route of routes) {
 
-            console.error(
-                "search.js nebyl načten."
-            );
+            try {
 
-            return;
-        }
+                const timetable =
+                    await window.searchTimetable.loadTimetable(
+                        route.line
+                    );
 
+                if (
+                    !timetable ||
+                    !Array.isArray(timetable.directions)
+                ) {
+                    continue;
+                }
 
-        // =====================================================
-        // ROUTES.JSON
-        // =====================================================
+                for (
+                    const direction
+                    of timetable.directions
+                ) {
 
-        let routes = [];
-
-
-        try {
-
-            const response =
-                await fetch(
-                    "data/routes.json"
-                );
-
-
-            if (!response.ok) {
-                throw new Error(
-                    `routes.json HTTP ${response.status}`
-                );
-            }
-
-
-            routes =
-                await response.json();
-
-
-            console.log(
-                "Načtené linky:",
-                routes
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Nepodařilo se načíst routes.json:",
-                error
-            );
-
-            resultsContainer.innerHTML = `
-                <div class="resultCard">
-                    <strong>
-                        Nepodařilo se načíst seznam linek.
-                    </strong>
-                </div>
-            `;
-
-            return;
-        }
-
-
-        // =====================================================
-        // INFORMACE O LINCE
-        // =====================================================
-
-        function getRouteInfo(line) {
-
-            const found =
-                routes.find(
-                    route =>
-                        String(route.line)
-                            .trim() ===
-                        String(line)
-                            .trim()
-                );
-
-
-            if (found) {
-                return found;
-            }
-
-
-            return {
-
-                line:
-                    String(line),
-
-                icon:
-                    "🚌",
-
-                color:
-                    "#2196F3",
-
-                type:
-                    "bus"
-            };
-        }
-
-
-        // =====================================================
-        // ZASTÁVKY DO DATALISTU
-        // =====================================================
-
-        async function loadAllStops() {
-
-            if (!stopsList) {
-                return;
-            }
-
-
-            const allStops =
-                new Set();
-
-
-            for (
-                const route of routes
-            ) {
-
-                try {
-
-                    const timetable =
-                        await window
-                            .searchTimetable
-                            .loadTimetable(
-                                route.line
-                            );
-
+                    if (
+                        !Array.isArray(direction.stops)
+                    ) {
+                        continue;
+                    }
 
                     for (
-                        const direction
-                        of timetable.directions || []
+                        const stop
+                        of direction.stops
                     ) {
 
-                        for (
-                            const stop
-                            of direction.stops || []
-                        ) {
-
-                            allStops.add(
-                                stop
+                        if (stop) {
+                            stops.add(
+                                String(stop)
                             );
                         }
                     }
-
-                } catch (error) {
-
-                    console.warn(
-                        `Linka ${route.line} se nepodařila načíst.`,
-                        error
-                    );
                 }
-            }
 
+            } catch (error) {
 
-            stopsList.innerHTML = "";
-
-
-            const sorted =
-                [...allStops].sort(
-                    (a, b) =>
-                        a.localeCompare(
-                            b,
-                            "cs"
-                        )
+                console.warn(
+                    `Nelze načíst zastávky linky ${route.line}`,
+                    error
                 );
+            }
+        }
 
+        stopsList.innerHTML = "";
 
-            for (
-                const stop of sorted
-            ) {
+        [...stops]
+            .sort((a, b) =>
+                a.localeCompare(b, "cs")
+            )
+            .forEach(stop => {
 
                 const option =
-                    document.createElement(
-                        "option"
-                    );
+                    document.createElement("option");
 
-                option.value =
-                    stop;
+                option.value = stop;
 
-                stopsList.appendChild(
-                    option
-                );
+                stopsList.appendChild(option);
+            });
+
+        console.log(
+            `Načteno zastávek: ${stops.size}`
+        );
+    }
+
+    await loadAllStops();
+
+    // =====================================================
+    // PROHOZENÍ ZASTÁVEK
+    // =====================================================
+
+    if (swapButton) {
+
+        swapButton.addEventListener(
+            "click",
+            () => {
+
+                const oldFrom =
+                    fromInput.value;
+
+                fromInput.value =
+                    toInput.value;
+
+                toInput.value =
+                    oldFrom;
             }
-        }
+        );
+    }
 
+    // =====================================================
+    // DNEŠNÍ DATUM
+    // =====================================================
 
-        await loadAllStops();
+    if (dateInput && !dateInput.value) {
 
+        const today =
+            new Date();
 
-        // =====================================================
-        // PROHOZENÍ
-        // =====================================================
+        const year =
+            today.getFullYear();
 
-        if (swapButton) {
+        const month =
+            String(
+                today.getMonth() + 1
+            ).padStart(2, "0");
 
-            swapButton.addEventListener(
-                "click",
-                () => {
+        const day =
+            String(
+                today.getDate()
+            ).padStart(2, "0");
 
-                    const temp =
-                        fromInput.value;
+        dateInput.value =
+            `${year}-${month}-${day}`;
+    }
 
-                    fromInput.value =
-                        toInput.value;
+    // =====================================================
+    // VÝCHOZÍ ČAS
+    // =====================================================
 
-                    toInput.value =
-                        temp;
-                }
-            );
-        }
+    if (timeInput && !timeInput.value) {
 
+        const now =
+            new Date();
 
-        // =====================================================
-        // DNEŠNÍ DATUM
-        // =====================================================
+        const hours =
+            String(
+                now.getHours()
+            ).padStart(2, "0");
+
+        const minutes =
+            String(
+                now.getMinutes()
+            ).padStart(2, "0");
+
+        timeInput.value =
+            `${hours}:${minutes}`;
+    }
+
+    // =====================================================
+    // TYP DNE
+    // =====================================================
+
+    function getDayType() {
 
         if (
-            dateInput &&
+            !dateInput ||
             !dateInput.value
         ) {
 
-            const today =
-                new Date();
-
-
-            const year =
-                today.getFullYear();
-
-
-            const month =
-                String(
-                    today.getMonth() + 1
-                ).padStart(2, "0");
-
-
             const day =
-                String(
-                    today.getDate()
-                ).padStart(2, "0");
-
-
-            dateInput.value =
-                `${year}-${month}-${day}`;
-        }
-
-
-        // =====================================================
-        // VÝCHOZÍ ČAS
-        // =====================================================
-
-        if (
-            timeInput &&
-            !timeInput.value
-        ) {
-
-            const now =
-                new Date();
-
-
-            timeInput.value =
-                String(
-                    now.getHours()
-                ).padStart(2, "0") +
-                ":" +
-                String(
-                    now.getMinutes()
-                ).padStart(2, "0");
-        }
-
-
-        // =====================================================
-        // TYP DNE
-        // =====================================================
-
-        function getDayType() {
-
-            if (
-                !dateInput ||
-                !dateInput.value
-            ) {
-
-                const today =
-                    new Date();
-
-                const day =
-                    today.getDay();
-
-                return (
-                    day === 0 ||
-                    day === 6
-                )
-                    ? "weekends"
-                    : "weekdays";
-            }
-
-
-            const date =
-                new Date(
-                    dateInput.value +
-                    "T12:00:00"
-                );
-
-
-            const day =
-                date.getDay();
-
+                new Date().getDay();
 
             return (
                 day === 0 ||
@@ -364,439 +275,158 @@ document.addEventListener(
                 : "weekdays";
         }
 
-
-        // =====================================================
-        // POČET PŘESTUPŮ
-        // =====================================================
-
-        function getTransferCount(
-            connection
-        ) {
-
-            if (
-                connection.type ===
-                "direct"
-            ) {
-                return 0;
-            }
-
-
-            if (
-                Array.isArray(
-                    connection.legs
-                )
-            ) {
-
-                return Math.max(
-                    0,
-                    connection.legs.length - 1
-                );
-            }
-
-
-            return 0;
-        }
-
-
-        // =====================================================
-        // VYTVOŘENÍ PŘÍMÉHO VÝSLEDKU
-        // =====================================================
-
-        function createDirectResult(
-            connection
-        ) {
-
-            const route =
-                getRouteInfo(
-                    connection.line
-                );
-
-
-            const card =
-                document.createElement(
-                    "div"
-                );
-
-            card.className =
-                "resultCard";
-
-
-            card.style.borderLeft =
-                `8px solid ${route.color}`;
-
-
-            // =================================================
-            // HLAVIČKA
-            // =================================================
-
-            const header =
-                document.createElement(
-                    "div"
-                );
-
-            header.className =
-                "resultHeader";
-
-
-            header.style.backgroundColor =
-                route.color;
-
-
-            header.innerHTML = `
-
-                <span class="routeIcon">
-                    ${route.icon}
-                </span>
-
-                <span class="routeNumber">
-                    ${route.line}${connection.isShortTrip ? " S" : ""}
-                </span>
-
-            `;
-
-
-            card.appendChild(
-                header
+        const date =
+            new Date(
+                dateInput.value +
+                "T12:00:00"
             );
 
+        const day =
+            date.getDay();
 
-            // =================================================
-            // SMĚR
-            // =================================================
+        return (
+            day === 0 ||
+            day === 6
+        )
+            ? "weekends"
+            : "weekdays";
+    }
 
-            const direction =
-                document.createElement(
-                    "div"
-                );
+    // =====================================================
+    // VYTVOŘENÍ KARTY SPOJE
+    // =====================================================
 
-            direction.className =
-                "routeDirection";
+    function createResult(connection) {
 
-
-            direction.innerHTML = `
-
-                <strong>Směr:</strong>
-                ${connection.destination || ""}
-
-            `;
-
-
-            card.appendChild(
-                direction
+        const route =
+            getRouteInfo(
+                connection.line
             );
 
+        const card =
+            document.createElement("div");
 
-            // =================================================
-            // ČASY
-            // =================================================
+        card.className =
+            "resultCard";
 
-            const main =
-                document.createElement(
-                    "div"
-                );
+        card.style.borderLeft =
+            `7px solid ${route.color}`;
 
-            main.className =
-                "resultMain";
+        // =================================================
+        // MODRÝ / BAREVNÝ PRUH
+        // =================================================
 
+        const header =
+            document.createElement("div");
 
-            main.innerHTML = `
+        header.className =
+            "resultHeader";
 
-                <div class="mainStop">
+        header.style.backgroundColor =
+            route.color;
 
-                    <div class="mainTime">
-                        ${connection.departure}
-                    </div>
+        const shortLabel =
+            connection.isShortTrip
+                ? " S"
+                : "";
 
-                    <div class="mainStopName">
-                        ${connection.from}
-                    </div>
+        header.innerHTML = `
+            <span class="routeIcon">
+                ${route.icon}
+            </span>
 
+            <span class="routeNumber">
+                ${route.line}${shortLabel}
+            </span>
+
+            <span class="routeDirection">
+                Směr: ${connection.destination || ""}
+            </span>
+        `;
+
+        card.appendChild(header);
+
+        // =================================================
+        // ČASY
+        // =================================================
+
+        const main =
+            document.createElement("div");
+
+        main.className =
+            "resultMain";
+
+        main.innerHTML = `
+            <div class="mainStop">
+
+                <div class="mainTime">
+                    ${connection.departure}
                 </div>
 
-
-                <div class="routeArrow">
-                    →
+                <div class="mainStopName">
+                    ${connection.from}
                 </div>
 
+            </div>
 
-                <div class="mainStop">
+            <div class="routeArrow">
+                →
+            </div>
 
-                    <div class="mainTime">
-                        ${connection.arrival}
-                    </div>
+            <div class="mainStop">
 
-                    <div class="mainStopName">
-                        ${connection.to}
-                    </div>
-
+                <div class="mainTime">
+                    ${connection.arrival}
                 </div>
 
-            `;
-
-
-            card.appendChild(
-                main
-            );
-
-
-            // =================================================
-            // ZASTÁVKY
-            // =================================================
-
-            addStopsBox(
-                card,
-                connection.stops,
-                route.color
-            );
-
-
-            return card;
-        }
-
-
-        // =====================================================
-        // VYTVOŘENÍ PŘESTUPNÍHO VÝSLEDKU
-        // =====================================================
-
-        function createTransferResult(
-            connection
-        ) {
-
-            const card =
-                document.createElement(
-                    "div"
-                );
-
-            card.className =
-                "resultCard transferCard";
-
-
-            card.style.borderLeft =
-                "8px solid #555";
-
-
-            const title =
-                document.createElement(
-                    "div"
-                );
-
-
-            title.className =
-                "transferTitle";
-
-
-            title.innerHTML = `
-
-                <strong>
-                    ${getTransferCount(connection)} ${
-                        getTransferCount(connection) === 1
-                            ? "přestup"
-                            : "přestupů"
-                    }
-                </strong>
-
-            `;
-
-
-            card.appendChild(
-                title
-            );
-
-
-            // =================================================
-            // HLAVNÍ ČASY
-            // =================================================
-
-            const main =
-                document.createElement(
-                    "div"
-                );
-
-            main.className =
-                "resultMain";
-
-
-            main.innerHTML = `
-
-                <div class="mainStop">
-
-                    <div class="mainTime">
-                        ${connection.departure}
-                    </div>
-
-                    <div class="mainStopName">
-                        ${connection.from}
-                    </div>
-
+                <div class="mainStopName">
+                    ${connection.to}
                 </div>
 
+            </div>
+        `;
 
-                <div class="routeArrow">
-                    →
-                </div>
+        card.appendChild(main);
 
-
-                <div class="mainStop">
-
-                    <div class="mainTime">
-                        ${connection.arrival}
-                    </div>
-
-                    <div class="mainStopName">
-                        ${connection.to}
-                    </div>
-
-                </div>
-
-            `;
-
-
-            card.appendChild(
-                main
-            );
-
-
-            // =================================================
-            // JEDNOTLIVÉ ÚSEKY
-            // =================================================
-
-            for (
-                const leg
-                of connection.legs
-            ) {
-
-                const route =
-                    getRouteInfo(
-                        leg.line
-                    );
-
-
-                const legBox =
-                    document.createElement(
-                        "div"
-                    );
-
-                legBox.className =
-                    "transferLeg";
-
-
-                legBox.style.borderLeft =
-                    `6px solid ${route.color}`;
-
-
-                legBox.innerHTML = `
-
-                    <div class="transferLegHeader">
-
-                        <span>
-                            ${route.icon}
-                        </span>
-
-                        <strong>
-                            ${route.line}${leg.isShortTrip ? " S" : ""}
-                        </strong>
-
-                        <span>
-                            Směr: ${leg.destination || ""}
-                        </span>
-
-                    </div>
-
-
-                    <div class="transferLegTimes">
-
-                        ${leg.departure}
-                        ${leg.from}
-
-                        →
-                        
-                        ${leg.arrival}
-                        ${leg.to}
-
-                    </div>
-
-                `;
-
-
-                card.appendChild(
-                    legBox
-                );
-
-
-                addStopsBox(
-                    legBox,
-                    leg.stops,
-                    route.color
-                );
-            }
-
-
-            return card;
-        }
-
-
-        // =====================================================
+        // =================================================
         // ZASTÁVKY
-        // =====================================================
+        // =================================================
 
-        function addStopsBox(
-            parent,
-            stops,
-            color
-        ) {
+        const stopsBox =
+            document.createElement("div");
 
-            if (
-                !Array.isArray(stops) ||
-                stops.length === 0
-            ) {
-                return;
-            }
+        stopsBox.className =
+            "resultStops";
 
+        const connectionStops =
+            Array.isArray(connection.stops)
+                ? connection.stops
+                : [];
 
-            const stopsBox =
-                document.createElement(
-                    "div"
-                );
-
-            stopsBox.className =
-                "resultStops";
-
-
-            stopsBox.style.display =
-                "none";
-
+        if (connectionStops.length > 0) {
 
             for (
                 const stop
-                of stops
+                of connectionStops
             ) {
 
                 const row =
-                    document.createElement(
-                        "div"
-                    );
+                    document.createElement("div");
 
                 row.className =
                     "stopRow";
 
-
                 const dot =
-                    document.createElement(
-                        "span"
-                    );
+                    document.createElement("span");
 
                 dot.className =
                     "stopDot";
 
-
                 dot.style.backgroundColor =
-                    color;
-
+                    route.color;
 
                 const name =
-                    document.createElement(
-                        "span"
-                    );
+                    document.createElement("span");
 
                 name.className =
                     "stopName";
@@ -804,11 +434,8 @@ document.addEventListener(
                 name.textContent =
                     stop.name;
 
-
                 const time =
-                    document.createElement(
-                        "span"
-                    );
+                    document.createElement("span");
 
                 time.className =
                     "stopTime";
@@ -816,335 +443,223 @@ document.addEventListener(
                 time.textContent =
                     stop.time;
 
+                row.appendChild(dot);
+                row.appendChild(name);
+                row.appendChild(time);
 
-                row.appendChild(
-                    dot
-                );
-
-                row.appendChild(
-                    name
-                );
-
-                row.appendChild(
-                    time
-                );
-
-
-                stopsBox.appendChild(
-                    row
-                );
+                stopsBox.appendChild(row);
             }
-
-
-            parent.appendChild(
-                stopsBox
-            );
-
-
-            // =================================================
-            // TLAČÍTKO
-            // =================================================
-
-            const toggle =
-                document.createElement(
-                    "button"
-                );
-
-
-            toggle.type =
-                "button";
-
-
-            toggle.className =
-                "stopsToggle";
-
-
-            toggle.textContent =
-                "Zobrazit zastávky ▼";
-
-
-            toggle.addEventListener(
-                "click",
-                () => {
-
-                    const hidden =
-                        stopsBox.style.display ===
-                        "none";
-
-
-                    if (hidden) {
-
-                        stopsBox.style.display =
-                            "block";
-
-                        toggle.textContent =
-                            "Skrýt zastávky ▲";
-
-                    } else {
-
-                        stopsBox.style.display =
-                            "none";
-
-                        toggle.textContent =
-                            "Zobrazit zastávky ▼";
-                    }
-                }
-            );
-
-
-            parent.appendChild(
-                toggle
-            );
         }
 
+        stopsBox.style.display =
+            "none";
 
-        // =====================================================
-        // VYHLEDÁVÁNÍ
-        // =====================================================
+        card.appendChild(stopsBox);
 
-        searchButton.addEventListener(
+        // =================================================
+        // TLAČÍTKO ZASTÁVEK
+        // =================================================
+
+        const toggle =
+            document.createElement("button");
+
+        toggle.type =
+            "button";
+
+        toggle.className =
+            "stopsToggle";
+
+        toggle.textContent =
+            "Zobrazit zastávky ▼";
+
+        toggle.addEventListener(
             "click",
-            async event => {
+            () => {
 
-                event.preventDefault();
+                const hidden =
+                    stopsBox.style.display ===
+                    "none";
 
+                if (hidden) {
 
-                const from =
-                    fromInput.value.trim();
+                    stopsBox.style.display =
+                        "block";
 
+                    toggle.textContent =
+                        "Skrýt zastávky ▲";
 
-                const to =
-                    toInput.value.trim();
+                } else {
 
+                    stopsBox.style.display =
+                        "none";
 
-                const afterTime =
-                    timeInput &&
-                    timeInput.value
-                        ? timeInput.value
-                        : "00:00";
-
-
-                // =================================================
-                // ODJEZDY / PŘÍJEZDY
-                // =================================================
-
-                const mode =
-                    document.querySelector(
-                        'input[name="mode"]:checked'
-                    )?.value ||
-                    "departure";
-
-
-                // =================================================
-                // KONTROLA
-                // =================================================
-
-                if (!from || !to) {
-
-                    resultsContainer.innerHTML = `
-
-                        <div class="resultCard">
-
-                            <strong>
-                                Vyber výchozí a cílovou zastávku.
-                            </strong>
-
-                        </div>
-
-                    `;
-
-                    return;
-                }
-
-
-                if (
-                    from.toLowerCase() ===
-                    to.toLowerCase()
-                ) {
-
-                    resultsContainer.innerHTML = `
-
-                        <div class="resultCard">
-
-                            Výchozí a cílová zastávka
-                            musí být rozdílné.
-
-                        </div>
-
-                    `;
-
-                    return;
-                }
-
-
-                // =================================================
-                // VYHLEDÁVÁNÍ
-                // =================================================
-
-                resultsContainer.innerHTML = `
-
-                    <div class="resultCard">
-
-                        Vyhledávám spojení…
-
-                    </div>
-
-                `;
-
-
-                try {
-
-                    const dayType =
-                        getDayType();
-
-
-                    const lineNumbers =
-                        routes.map(
-                            route =>
-                                String(
-                                    route.line
-                                )
-                        );
-
-
-                    console.log(
-                        "Hledám:",
-                        from,
-                        "→",
-                        to,
-                        "čas:",
-                        afterTime,
-                        "režim:",
-                        mode,
-                        "den:",
-                        dayType
-                    );
-
-
-                    const connections =
-                        await window
-                            .searchTimetable
-                            .findConnections(
-
-                                from,
-
-                                to,
-
-                                afterTime,
-
-                                dayType,
-
-                                lineNumbers,
-
-                                mode
-                            );
-
-
-                    resultsContainer.innerHTML =
-                        "";
-
-
-                    // =================================================
-                    // ŽÁDNÝ VÝSLEDEK
-                    // =================================================
-
-                    if (
-                        !connections ||
-                        connections.length === 0
-                    ) {
-
-                        resultsContainer.innerHTML = `
-
-                            <div class="resultCard">
-
-                                <strong>
-                                    Žádné spojení nebylo nalezeno.
-                                </strong>
-
-                                <p>
-                                    ${from}
-                                    →
-                                    ${to}
-                                </p>
-
-                                <p>
-                                    ${mode === "departure"
-                                        ? `Od ${afterTime}`
-                                        : `Do ${afterTime}`
-                                    }
-                                </p>
-
-                            </div>
-
-                        `;
-
-                        return;
-                    }
-
-
-                    // =================================================
-                    // VÝSLEDKY
-                    // =================================================
-
-                    for (
-                        const connection
-                        of connections
-                    ) {
-
-                        let card;
-
-
-                        if (
-                            connection.type ===
-                            "direct"
-                        ) {
-
-                            card =
-                                createDirectResult(
-                                    connection
-                                );
-
-                        } else {
-
-                            card =
-                                createTransferResult(
-                                    connection
-                                );
-                        }
-
-
-                        resultsContainer.appendChild(
-                            card
-                        );
-                    }
-
-
-                } catch (error) {
-
-                    console.error(
-                        "CHYBA VYHLEDÁVÁNÍ:",
-                        error
-                    );
-
-
-                    resultsContainer.innerHTML = `
-
-                        <div class="resultCard">
-
-                            <strong>
-                                Chyba při vyhledávání.
-                            </strong>
-
-                            <p>
-                                ${error.message}
-                            </p>
-
-                        </div>
-
-                    `;
+                    toggle.textContent =
+                        "Zobrazit zastávky ▼";
                 }
             }
         );
 
+        card.appendChild(toggle);
+
+        return card;
     }
-);
+
+    // =====================================================
+    // VYHLEDÁVÁNÍ
+    // =====================================================
+
+    searchButton.addEventListener(
+        "click",
+        async event => {
+
+            event.preventDefault();
+
+            const from =
+                fromInput.value.trim();
+
+            const to =
+                toInput.value.trim();
+
+            const afterTime =
+                timeInput &&
+                timeInput.value
+                    ? timeInput.value
+                    : "00:00";
+
+            // =============================================
+            // KONTROLA
+            // =============================================
+
+            if (!from || !to) {
+
+                resultsContainer.innerHTML = `
+                    <div class="resultCard messageCard">
+                        <strong>
+                            Vyberte výchozí a cílovou zastávku.
+                        </strong>
+                    </div>
+                `;
+
+                return;
+            }
+
+            if (
+                from.toLowerCase() ===
+                to.toLowerCase()
+            ) {
+
+                resultsContainer.innerHTML = `
+                    <div class="resultCard messageCard">
+                        Výchozí a cílová zastávka
+                        musí být rozdílné.
+                    </div>
+                `;
+
+                return;
+            }
+
+            // =============================================
+            // NAČÍTÁNÍ
+            // =============================================
+
+            resultsContainer.innerHTML = `
+                <div class="searchLoading">
+                    <span class="loadingSpinner"></span>
+                    <span>Vyhledávám spojení…</span>
+                </div>
+            `;
+
+            try {
+
+                const dayType =
+                    getDayType();
+
+                const lineNumbers =
+                    routes.map(
+                        route =>
+                            String(route.line)
+                    );
+
+                // =========================================
+                // VYHLEDÁNÍ
+                // =========================================
+
+                const connections =
+                    await window.searchTimetable.findConnections(
+                        from,
+                        to,
+                        afterTime,
+                        dayType,
+                        lineNumbers
+                    );
+
+                resultsContainer.innerHTML = "";
+
+                // =========================================
+                // ŽÁDNÉ SPOJENÍ
+                // =========================================
+
+                if (
+                    !Array.isArray(connections) ||
+                    connections.length === 0
+                ) {
+
+                    resultsContainer.innerHTML = `
+                        <div class="resultCard messageCard">
+
+                            <strong>
+                                Žádné spojení nebylo nalezeno.
+                            </strong>
+
+                            <p>
+                                ${from}
+                                →
+                                ${to}
+                            </p>
+
+                        </div>
+                    `;
+
+                    return;
+                }
+
+                // =========================================
+                // VÝSLEDKY
+                // =========================================
+
+                for (
+                    const connection
+                    of connections
+                ) {
+
+                    resultsContainer.appendChild(
+                        createResult(
+                            connection
+                        )
+                    );
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "CHYBA VYHLEDÁVÁNÍ:",
+                    error
+                );
+
+                resultsContainer.innerHTML = `
+                    <div class="resultCard errorCard">
+
+                        <strong>
+                            Chyba při vyhledávání.
+                        </strong>
+
+                        <p>
+                            ${error.message}
+                        </p>
+
+                    </div>
+                `;
+            }
+        }
+    );
+});
