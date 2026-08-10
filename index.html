@@ -22,46 +22,78 @@
 
 <body>
 
+
     <!-- ==================================================
          VYHLEDÁVÁNÍ
     ================================================== -->
 
     <div class="searchBox">
 
-        <!-- VÝCHOZÍ ZASTÁVKA -->
 
-        <label for="from">
-            Z
-        </label>
+        <!-- ==============================================
+             ODKUD → KAM
+        =============================================== -->
 
-        <input
-            id="from"
-            type="text"
-            list="stops"
-            autocomplete="off"
-        >
+        <div class="searchRoute">
 
 
-        <!-- CÍLOVÁ ZASTÁVKA -->
+            <!-- ODKUD -->
 
-        <label for="to">
-            Do
-        </label>
+            <div class="searchStop">
 
-        <input
-            id="to"
-            type="text"
-            list="stops"
-            autocomplete="off"
-        >
+                <div class="searchStopLabel">
+                    Odkud
+                </div>
+
+                <input
+                    id="from"
+                    type="text"
+                    list="stops"
+                    placeholder="Výchozí zastávka"
+                    autocomplete="off"
+                >
+
+            </div>
 
 
-        <!-- SEZNAM ZASTÁVEK -->
+            <!-- ŠIPKA -->
+
+            <div class="searchArrow">
+                →
+            </div>
+
+
+            <!-- KAM -->
+
+            <div class="searchStop">
+
+                <div class="searchStopLabel">
+                    Kam
+                </div>
+
+                <input
+                    id="to"
+                    type="text"
+                    list="stops"
+                    placeholder="Cílová zastávka"
+                    autocomplete="off"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- ==============================================
+             SEZNAM ZASTÁVEK
+        =============================================== -->
 
         <datalist id="stops"></datalist>
 
 
-        <!-- PROHOZENÍ -->
+        <!-- ==============================================
+             PROHOZENÍ
+        =============================================== -->
 
         <div class="swapBox">
 
@@ -75,7 +107,9 @@
         </div>
 
 
-        <!-- DATUM -->
+        <!-- ==============================================
+             DATUM
+        =============================================== -->
 
         <label for="date">
             Datum
@@ -87,7 +121,9 @@
         >
 
 
-        <!-- ČAS -->
+        <!-- ==============================================
+             ČAS
+        =============================================== -->
 
         <label for="time">
             Čas
@@ -99,11 +135,12 @@
         >
 
 
-        <!-- ==================================================
-             REŽIM VYHLEDÁVÁNÍ
-        ================================================== -->
+        <!-- ==============================================
+             ODJEZDY / PŘÍJEZDY
+        =============================================== -->
 
         <div class="mode">
+
 
             <label>
 
@@ -131,12 +168,13 @@
 
             </label>
 
+
         </div>
 
 
-        <!-- ==================================================
-             TLAČÍTKO VYHLEDAT
-        ================================================== -->
+        <!-- ==============================================
+             VYHLEDAT
+        =============================================== -->
 
         <button
             id="searchButton"
@@ -145,7 +183,9 @@
             Vyhledat spojení
         </button>
 
+
     </div>
+
 
 
     <!-- ==================================================
@@ -154,11 +194,16 @@
 
     <div id="results">
 
+
+        <!-- Výchozí karta -->
+
         <div class="resultCard">
+
 
             <div class="departureTime">
                 Připraveno
             </div>
+
 
             <p>
 
@@ -170,21 +215,25 @@
 
             </p>
 
+
         </div>
 
+
     </div>
+
 
 
     <!-- ==================================================
          SCRIPTS
     ================================================== -->
 
-    <!-- Nejdříve search.js -->
+    <!-- Nejdříve vyhledávací logika -->
     <script src="search.js"></script>
 
-    <!-- Potom app.js -->
+    <!-- Potom aplikace -->
     <script src="app.js"></script>
+
 
 </body>
 
-</html>
+                    </html>
