@@ -27,9 +27,11 @@ h1 {
 
 .searchBox {
     background: white;
-    border-radius: 14px;
-    padding: 22px;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.10);
+    border-radius: 13px;
+    margin-bottom: 20px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.09);
 }
 
 
@@ -37,38 +39,82 @@ h1 {
    ODKUD / KAM
    ========================================= */
 
-.inputRow {
+.searchRoute {
     display: flex;
-    align-items: flex-end;
-    gap: 12px;
+    align-items: stretch;
+    min-height: 92px;
+    background: #1976d2;
+    color: white;
 }
 
-.inputGroup {
+
+/* Jedno pole */
+
+.searchStop {
     flex: 1;
+    padding: 15px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
-.inputGroup label,
-.optionGroup label {
-    display: block;
-    margin-bottom: 6px;
+
+/* Text Odkud / Kam */
+
+.searchStopLabel {
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
+    margin-bottom: 7px;
+    opacity: 0.95;
 }
 
-.inputGroup input {
+
+/* Input */
+
+.searchStop input {
     width: 100%;
-    height: 44px;
+    height: 42px;
+
     padding: 0 13px;
-    border: 1px solid #c8ccd1;
+
+    border: 0;
     border-radius: 8px;
+
     background: white;
+    color: #202124;
+
     font-size: 16px;
+    font-family: Arial, Helvetica, sans-serif;
+
     outline: none;
 }
 
-.inputGroup input:focus {
-    border-color: #1976d2;
-    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
+
+.searchStop input::placeholder {
+    color: #777;
+}
+
+
+.searchStop input:focus {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+}
+
+
+/* =========================================
+   ŠIPKA ODKUD → KAM
+   ========================================= */
+
+.searchArrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 55px;
+
+    font-size: 30px;
+    font-weight: 700;
+
+    flex-shrink: 0;
 }
 
 
@@ -76,19 +122,33 @@ h1 {
    PROHOZENÍ
    ========================================= */
 
-.swapButton {
-    width: 44px;
-    height: 44px;
-    border: 1px solid #c8ccd1;
-    border-radius: 8px;
+.swapBox {
+    padding: 12px 15px 0;
+}
+
+
+#swapButton {
+    width: 100%;
+    height: 38px;
+
+    border: 1px solid #d4d8dd;
+    border-radius: 7px;
+
     background: #f7f8fa;
+
+    color: #202124;
+
     cursor: pointer;
-    font-size: 22px;
+
+    font-size: 14px;
+    font-weight: 600;
+
     transition: 0.15s;
 }
 
-.swapButton:hover {
-    background: #e9edf2;
+
+#swapButton:hover {
+    background: #eceff2;
 }
 
 
@@ -96,29 +156,47 @@ h1 {
    DATUM A ČAS
    ========================================= */
 
-.optionsRow {
-    display: flex;
-    gap: 18px;
-    margin-top: 18px;
+.searchBox > label {
+    display: inline-block;
+
+    margin: 15px 0 6px 15px;
+
+    font-size: 14px;
+    font-weight: 600;
 }
 
-.optionGroup {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-}
 
-.optionGroup label {
-    margin: 0;
-}
-
-.optionGroup input {
+.searchBox > input[type="date"],
+.searchBox > input[type="time"] {
     height: 40px;
+
+    margin-left: 15px;
+    margin-right: 10px;
+
     padding: 0 10px;
+
     border: 1px solid #c8ccd1;
     border-radius: 7px;
-    font-size: 15px;
+
     background: white;
+
+    font-size: 15px;
+
+    outline: none;
+}
+
+
+.searchBox > input[type="date"]:focus,
+.searchBox > input[type="time"]:focus {
+    border-color: #1976d2;
+
+    box-shadow:
+        0 0 0 3px rgba(
+            25,
+            118,
+            210,
+            0.12
+        );
 }
 
 
@@ -128,17 +206,25 @@ h1 {
 
 .mode {
     display: flex;
+
     gap: 24px;
-    margin-top: 18px;
+
+    margin: 17px 15px 0;
 }
+
 
 .mode label {
     display: flex;
+
     align-items: center;
+
     gap: 7px;
+
     cursor: pointer;
+
     font-size: 15px;
 }
+
 
 .mode input {
     accent-color: #1976d2;
@@ -149,25 +235,35 @@ h1 {
    VYHLEDAT
    ========================================= */
 
-.searchButton {
-    width: 100%;
-    margin-top: 20px;
+#searchButton {
+    width: calc(100% - 30px);
+
+    margin: 18px 15px 15px;
+
     height: 46px;
+
     border: 0;
     border-radius: 9px;
+
     background: #1976d2;
+
     color: white;
+
     font-size: 16px;
     font-weight: 700;
+
     cursor: pointer;
+
     transition: 0.15s;
 }
 
-.searchButton:hover {
+
+#searchButton:hover {
     background: #1565c0;
 }
 
-.searchButton:active {
+
+#searchButton:active {
     transform: scale(0.99);
 }
 
@@ -180,13 +276,21 @@ h1 {
     margin-top: 22px;
 }
 
+
 .resultCard {
     background: white;
+
     border-radius: 13px;
+
     margin-bottom: 16px;
+
     padding: 0;
+
     overflow: hidden;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.09);
+
+    box-shadow:
+        0 3px 12px
+        rgba(0, 0, 0, 0.09);
 }
 
 
@@ -196,25 +300,33 @@ h1 {
 
 .resultHeader {
     min-height: 52px;
+
     padding: 10px 15px;
 
     display: flex;
+
     align-items: center;
+
     gap: 10px;
 
     color: white;
 }
 
+
 .routeIcon {
     font-size: 24px;
 }
 
+
 .routeNumber {
     font-size: 21px;
+    font-weight: 700;
 }
+
 
 .routeDirection {
     margin-left: auto;
+
     font-size: 14px;
 }
 
@@ -225,31 +337,43 @@ h1 {
 
 .resultMain {
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     gap: 28px;
 
     padding: 20px 15px;
 }
 
+
 .mainStop {
     text-align: center;
+
     min-width: 130px;
 }
 
+
 .mainTime {
     font-size: 26px;
+
     font-weight: 700;
 }
 
+
 .mainStopName {
     margin-top: 5px;
+
     font-size: 14px;
+
     color: #555;
 }
 
+
 .routeArrow {
     font-size: 28px;
+
     color: #777;
 }
 
@@ -262,29 +386,41 @@ h1 {
     padding: 4px 18px 12px;
 }
 
+
 .stopRow {
     display: grid;
-    grid-template-columns: 14px 1fr auto;
+
+    grid-template-columns:
+        14px 1fr auto;
+
     align-items: center;
+
     gap: 10px;
 
     min-height: 35px;
+
     border-bottom: 1px solid #eee;
 }
+
 
 .stopDot {
     width: 9px;
     height: 9px;
+
     border-radius: 50%;
+
     display: block;
 }
+
 
 .stopName {
     font-size: 14px;
 }
 
+
 .stopTime {
     font-size: 14px;
+
     font-weight: 600;
 }
 
@@ -295,11 +431,13 @@ h1 {
 
 .stopsToggle {
     width: calc(100% - 30px);
+
     margin: 5px 15px 15px;
 
     height: 38px;
 
     border: 1px solid #d4d8dd;
+
     border-radius: 7px;
 
     background: #f7f8fa;
@@ -307,8 +445,10 @@ h1 {
     cursor: pointer;
 
     font-size: 14px;
+
     font-weight: 600;
 }
+
 
 .stopsToggle:hover {
     background: #eceff2;
@@ -323,15 +463,21 @@ h1 {
     padding-bottom: 4px;
 }
 
+
 .transferTitle {
     padding: 13px 15px 8px;
+
     font-size: 14px;
+
     font-weight: 700;
+
     color: #555;
 }
 
+
 .transferStop {
     margin: 5px 15px 12px;
+
     padding: 11px 13px;
 
     border-radius: 8px;
@@ -340,6 +486,7 @@ h1 {
 
     font-size: 14px;
 }
+
 
 .transferStop span {
     margin-right: 5px;
@@ -352,11 +499,16 @@ h1 {
 
 .departureTime {
     padding: 15px;
+
     background: #1976d2;
+
     color: white;
+
     font-size: 18px;
+
     font-weight: 700;
 }
+
 
 .resultCard > p {
     padding: 0 15px 15px;
@@ -371,53 +523,87 @@ h1 {
 
     .container {
         width: calc(100% - 20px);
+
         margin: 15px auto;
     }
+
 
     h1 {
         font-size: 25px;
     }
 
-    .inputRow {
+
+    /* Odkud / Kam */
+
+    .searchRoute {
+        min-height: auto;
+
         flex-direction: column;
-        align-items: stretch;
     }
 
-    .swapButton {
+
+    .searchStop {
+        padding: 13px 15px;
+    }
+
+
+    .searchStopLabel {
+        margin-bottom: 6px;
+    }
+
+
+    .searchArrow {
         width: 100%;
+
+        height: 30px;
+
+        font-size: 24px;
     }
 
-    .optionsRow {
-        flex-direction: column;
-        gap: 12px;
+
+    /* Datum a čas */
+
+    .searchBox > input[type="date"],
+    .searchBox > input[type="time"] {
+
+        width: calc(100% - 30px);
+
+        margin: 0 15px 8px;
     }
 
-    .optionGroup {
-        justify-content: space-between;
+
+    .searchBox > label {
+        display: block;
+
+        margin: 12px 15px 6px;
     }
 
-    .optionGroup input {
-        flex: 1;
-    }
+
+    /* Výsledky */
 
     .resultMain {
         gap: 10px;
     }
 
+
     .mainStop {
         min-width: 0;
+
         flex: 1;
     }
+
 
     .mainTime {
         font-size: 22px;
     }
 
+
     .mainStopName {
         font-size: 13px;
     }
 
+
     .routeDirection {
         font-size: 12px;
     }
-}
+        }
