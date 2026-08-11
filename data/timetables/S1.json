@@ -2,7 +2,7 @@
   "line": "S1",
   "directions": [
     {
-      "destination": "Starý Ližátkov",
+      "destination": "Starý Lízátkov",
       "stops": [
         "Ansko, nádraží",
         "Nádraží Pralesov",
@@ -203,7 +203,7 @@
       }
     },
     {
-      "destination": "Ana-Ansko",
+      "destination": "Ansko, nádraží",
       "stops": [
         "Starý Lízátkov, nádraží",
         "Nový Lízátkov, nádraží",
