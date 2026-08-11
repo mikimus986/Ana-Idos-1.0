@@ -4,13 +4,13 @@
     {
       "destination": "Starý Ližátkov",
       "stops": [
-        "Ana-Ansko",
-        "Ana-Pralesov",
-        "Ana-Olimpia",
-        "Ana-Nové Mlýny",
-        "Ana-Hlavní nádraží",
-        "Ana-Nový Lízátkov",
-        "Starý Lízátkov"
+        "Ansko, nádraží",
+        "Nádraží Pralesov",
+        "Olimpia",
+        "Nádraží Nové Mlýny",
+        "Hlavní nádraží",
+        "Nový Lízátkov, nádraží",
+        "Starý Lízátkov, nádraží"
       ],
       "travelTimes": [
         0,
@@ -205,13 +205,13 @@
     {
       "destination": "Ana-Ansko",
       "stops": [
-        "Starý Ližátkov",
-        "Ana-Nový Ližátkov",
-        "Ana-Hlavní nádraží",
-        "Ana-Nové Mlýny",
-        "Ana-Olimpe",
-        "Ana-Pralesov",
-        "Ana-Ansko"
+        "Starý Lízátkov, nádraží",
+        "Nový Lízátkov, nádraží",
+        "Hlavní nádraží",
+        "Nádraží Nové Mlýny",
+        "Olimpia",
+        "Nádraží Pralesov",
+        "Ansko, nádraží"
       ],
       "travelTimes": [
         0,
