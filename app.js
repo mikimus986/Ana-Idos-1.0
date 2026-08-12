@@ -617,4 +617,273 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 // ==================================================
                 // PŘESTUP
-                //
+                // ==================================================
+
+                if (
+                    index < legs.length - 1
+                ) {
+
+                    const nextLeg =
+                        legs[index + 1];
+
+
+                    const transferStop =
+                        leg.transferStop ||
+                        nextLeg.transferStop ||
+                        leg.to ||
+                        nextLeg.from;
+
+
+                    const transferBox =
+                        document.createElement("div");
+
+                    transferBox.className =
+                        "transferStop";
+
+
+                    transferBox.innerHTML = `
+
+                        <span>⇄</span>
+
+                        <strong>
+                            Přestup:
+                        </strong>
+
+                        ${transferStop}
+
+                    `;
+
+
+                    card.appendChild(
+                        transferBox
+                    );
+                }
+
+            }
+        );
+
+
+        return card;
+    }
+
+
+    // ==================================================
+    // VÝSLEDEK
+    // ==================================================
+
+    function createResult(connection) {
+
+        if (
+            connection.type === "transfer" ||
+            Array.isArray(connection.legs)
+        ) {
+
+            return createTransferResult(
+                connection
+            );
+        }
+
+        return createDirectResult(
+            connection
+        );
+    }
+
+
+    // ==================================================
+    // VYHLEDÁVÁNÍ
+    // ==================================================
+
+    searchButton.addEventListener(
+        "click",
+        async event => {
+
+            event.preventDefault();
+
+
+            const from =
+                fromInput.value.trim();
+
+            const to =
+                toInput.value.trim();
+
+
+            const afterTime =
+                timeInput &&
+                timeInput.value
+                    ? timeInput.value
+                    : "00:00";
+
+
+            // ==================================================
+            // KONTROLA
+            // ==================================================
+
+            if (!from || !to) {
+
+                resultsContainer.innerHTML = `
+
+                    <div class="resultCard">
+
+                        <div class="departureTime">
+                            Chybí zastávka
+                        </div>
+
+                        <p>
+                            Zadejte výchozí a cílovou zastávku.
+                        </p>
+
+                    </div>
+
+                `;
+
+                return;
+            }
+
+
+            if (
+                from.toLowerCase() ===
+                to.toLowerCase()
+            ) {
+
+                resultsContainer.innerHTML = `
+
+                    <div class="resultCard">
+
+                        <div class="departureTime">
+                            Chyba
+                        </div>
+
+                        <p>
+                            Výchozí a cílová zastávka
+                            musí být rozdílné.
+                        </p>
+
+                    </div>
+
+                `;
+
+                return;
+            }
+
+
+            // ==================================================
+            // VYHLEDÁVÁNÍ
+            // ==================================================
+
+            resultsContainer.innerHTML = `
+
+                <div class="resultCard">
+
+                    <div class="departureTime">
+                        Vyhledávám spojení…
+                    </div>
+
+                </div>
+
+            `;
+
+
+            try {
+
+                const dayType =
+                    getDayType();
+
+                const mode =
+                    getSearchMode();
+
+
+                const lineNumbers =
+                    routes.map(
+                        route =>
+                            String(route.line)
+                    );
+
+
+                const connections =
+                    await window.searchTimetable.findConnections(
+                        from,
+                        to,
+                        afterTime,
+                        dayType,
+                        lineNumbers,
+                        mode
+                    );
+
+
+                resultsContainer.innerHTML = "";
+
+
+                // ==================================================
+                // ŽÁDNÉ SPOJENÍ
+                // ==================================================
+
+                if (
+                    !connections ||
+                    connections.length === 0
+                ) {
+
+                    resultsContainer.innerHTML = `
+
+                        <div class="resultCard">
+
+                            <div class="departureTime">
+                                Spojení nenalezeno
+                            </div>
+
+                            <p>
+                                ${from}
+                                →
+                                ${to}
+                            </p>
+
+                        </div>
+
+                    `;
+
+                    return;
+                }
+
+
+                // ==================================================
+                // VÝSLEDKY
+                // ==================================================
+
+                for (
+                    const connection
+                    of connections
+                ) {
+
+                    resultsContainer.appendChild(
+                        createResult(connection)
+                    );
+                }
+
+
+            } catch (error) {
+
+                console.error(
+                    "CHYBA VYHLEDÁVÁNÍ:",
+                    error
+                );
+
+
+                resultsContainer.innerHTML = `
+
+                    <div class="resultCard">
+
+                        <div class="departureTime">
+                            Chyba při vyhledávání
+                        </div>
+
+                        <p>
+                            ${error.message}
+                        </p>
+
+                    </div>
+
+                `;
+            }
+        }
+    );
+
+});
