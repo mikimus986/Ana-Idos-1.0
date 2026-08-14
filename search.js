@@ -2,160 +2,97 @@
 
 window.searchTimetable = (() => {
 
-    // =====================================================
-    // CACHE
-    // =====================================================
+    // =========================================================
+    // NASTAVENÍ
+    // =========================================================
 
-    const timetableCache = new Map();
+    const cache = new Map();
 
-    // Maximálně 4 PŘESTUPY
-    // => maximálně 5 různých spojů
     const MAX_TRANSFERS = 4;
-    const MAX_LEGS = MAX_TRANSFERS + 1;
+    const MAX_RESULTS = 20;
 
     // Minimální čas na přestup
     const MIN_TRANSFER_TIME = 2;
 
-    // Ochrana proti nekonečnému hledání
+    // Maximální počet prohledaných stavů
     const MAX_STATES = 10000;
 
-    // Kolik výsledků vrátit aplikaci
-    const MAX_RESULTS = 30;
 
-
-    // =====================================================
+    // =========================================================
     // NORMALIZACE
-    // =====================================================
+    // =========================================================
 
-    function normalizeStop(value) {
+    function normalizeStop(name) {
 
-        return String(value ?? "")
+        return String(name ?? "")
             .trim()
             .toLowerCase()
             .replace(/\s+/g, " ");
     }
 
 
-    // =====================================================
-    // NAČTENÍ JÍZDNÍHO ŘÁDU
-    // =====================================================
+    // =========================================================
+    // ČAS → MINUTY
+    // =========================================================
 
-    async function loadTimetable(line) {
+    function timeToMinutes(time) {
 
-        line = String(line ?? "").trim();
-
-        if (!line) {
-            throw new Error("Chybí číslo linky.");
+        if (!time) {
+            return 0;
         }
 
-        if (timetableCache.has(line)) {
-            return timetableCache.get(line);
+        const parts =
+            String(time)
+                .trim()
+                .split(":");
+
+        if (parts.length !== 2) {
+            return 0;
         }
 
-        const url =
-            `data/timetables/${encodeURIComponent(line)}.json`;
-
-        const response =
-            await fetch(url);
-
-        if (!response.ok) {
-
-            throw new Error(
-                `Nelze načíst jízdní řád linky ${line}: HTTP ${response.status}`
-            );
-        }
-
-        const data =
-            await response.json();
+        const h = Number(parts[0]);
+        const m = Number(parts[1]);
 
         if (
-            !data ||
-            !Array.isArray(data.directions)
+            !Number.isFinite(h) ||
+            !Number.isFinite(m)
         ) {
-
-            throw new Error(
-                `Jízdní řád linky ${line} nemá platné directions.`
-            );
+            return 0;
         }
 
-        timetableCache.set(
-            line,
-            data
-        );
-
-        return data;
+        return h * 60 + m;
     }
 
 
-    // =====================================================
-    // ČAS
-    // =====================================================
-
-    function timeToMinutes(value) {
-
-        const text =
-            String(value ?? "").trim();
-
-        const match =
-            text.match(/^(\d{1,3}):(\d{2})$/);
-
-        if (!match) {
-            return NaN;
-        }
-
-        const hour =
-            Number(match[1]);
-
-        const minute =
-            Number(match[2]);
-
-        if (
-            !Number.isFinite(hour) ||
-            !Number.isFinite(minute) ||
-            minute < 0 ||
-            minute > 59
-        ) {
-            return NaN;
-        }
-
-        return hour * 60 + minute;
-    }
-
+    // =========================================================
+    // MINUTY → ČAS
+    // =========================================================
 
     function minutesToTime(minutes) {
 
-        let value =
-            Number(minutes);
+        minutes =
+            ((Number(minutes) % 1440) + 1440) % 1440;
 
-        if (!Number.isFinite(value)) {
-            return "--:--";
-        }
+        const h =
+            Math.floor(minutes / 60);
 
-        value =
-            ((value % 1440) + 1440) % 1440;
-
-        const hour =
-            Math.floor(value / 60);
-
-        const minute =
-            value % 60;
+        const m =
+            minutes % 60;
 
         return (
-            String(hour).padStart(2, "0") +
+            String(h).padStart(2, "0") +
             ":" +
-            String(minute).padStart(2, "0")
+            String(m).padStart(2, "0")
         );
     }
 
 
-    // =====================================================
+    // =========================================================
     // ODJEZD Z JÍZDNÍHO ŘÁDU
     //
-    // Podporuje:
-    // 25
-    // 45
-    // 45S
-    // =====================================================
+    // 15
+    // 15S
+    // =========================================================
 
     function parseDeparture(value) {
 
@@ -192,66 +129,67 @@ window.searchTimetable = (() => {
     }
 
 
-    // =====================================================
-    // NAJDE DATA PRO DAN
-    // =====================================================
+    // =========================================================
+    // NAČTENÍ JÍZDNÍHO ŘÁDU
+    // =========================================================
 
-    function getDayTable(
-        direction,
-        dayType
-    ) {
+    async function loadTimetable(line) {
 
-        if (!direction) {
-            return null;
+        line =
+            String(line).trim();
+
+        if (!line) {
+            throw new Error(
+                "Chybí číslo linky."
+            );
         }
 
-        // app.js používá weekdays / weekends
+        if (cache.has(line)) {
+            return cache.get(line);
+        }
+
+        const url =
+            `data/timetables/${encodeURIComponent(line)}.json`;
+
+        const response =
+            await fetch(url);
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Nelze načíst linku ${line}: HTTP ${response.status}`
+            );
+        }
+
+        const data =
+            await response.json();
+
         if (
-            dayType === "weekdays" &&
-            direction.weekdays
+            !data ||
+            !Array.isArray(data.directions)
         ) {
-            return direction.weekdays;
+
+            throw new Error(
+                `Jízdní řád linky ${line} nemá platné directions.`
+            );
         }
 
-        if (
-            dayType === "weekends" &&
-            direction.weekends
-        ) {
-            return direction.weekends;
-        }
+        cache.set(
+            line,
+            data
+        );
 
-        // Záloha pro případ staršího pojmenování
-        if (
-            dayType === "weekday" &&
-            direction.weekday
-        ) {
-            return direction.weekday;
-        }
-
-        if (
-            dayType === "weekend" &&
-            direction.weekend
-        ) {
-            return direction.weekend;
-        }
-
-        // Obecná záloha
-        if (direction[dayType]) {
-            return direction[dayType];
-        }
-
-        return null;
+        return data;
     }
 
 
-    // =====================================================
-    // VYTVOŘENÍ VŠECH SPOJŮ JEDNOHO SMĚRU
-    // =====================================================
+    // =========================================================
+    // VYTVOŘENÍ VŠECH JÍZD JEDNOHO SMĚRU
+    // =========================================================
 
     function createTrips(
         line,
         direction,
-        directionIndex,
         dayType
     ) {
 
@@ -259,45 +197,44 @@ window.searchTimetable = (() => {
 
         if (
             !direction ||
-            typeof direction !== "object"
-        ) {
-            return trips;
-        }
-
-        if (
-            !Array.isArray(direction.stops)
-        ) {
-            return trips;
-        }
-
-        if (
+            !Array.isArray(direction.stops) ||
             !Array.isArray(direction.travelTimes)
         ) {
             return trips;
         }
 
-        const timetable =
-            getDayTable(
-                direction,
-                dayType
-            );
+
+        // -----------------------------------------------------
+        // NAČTENÍ SPRÁVNÉHO TYPU DNE
+        // -----------------------------------------------------
+
+        let timetable =
+            direction[dayType];
+
+        if (
+            !timetable &&
+            dayType === "weekend"
+        ) {
+            timetable =
+                direction.weekends;
+        }
+
+        if (
+            !timetable &&
+            dayType === "weekday"
+        ) {
+            timetable =
+                direction.weekdays;
+        }
 
         if (!timetable) {
             return trips;
         }
 
 
-        // -------------------------------------------------
-        // ZASTÁVKY
-        // -------------------------------------------------
-
-        const stopNames =
-            direction.stops;
-
-
-        // -------------------------------------------------
-        // VYTVOŘENÍ SPOJŮ
-        // -------------------------------------------------
+        // -----------------------------------------------------
+        // HODINY
+        // -----------------------------------------------------
 
         for (
             const hourKey of Object.keys(timetable)
@@ -318,15 +255,17 @@ window.searchTimetable = (() => {
             }
 
 
+            // -------------------------------------------------
+            // ODJEZDY
+            // -------------------------------------------------
+
             for (
-                let departureIndex = 0;
-                departureIndex < departures.length;
-                departureIndex++
+                const departureValue of departures
             ) {
 
                 const parsed =
                     parseDeparture(
-                        departures[departureIndex]
+                        departureValue
                     );
 
                 if (!parsed) {
@@ -334,32 +273,26 @@ window.searchTimetable = (() => {
                 }
 
 
-                const firstTime =
+                const startTime =
                     hour * 60 +
                     parsed.minute;
 
 
-                // -------------------------------------------------
-                // URČENÍ KONCE SPOJE
-                // -------------------------------------------------
-
                 let stopCount =
-                    stopNames.length;
+                    direction.stops.length;
 
                 let destination =
-                    String(
-                        direction.destination ?? ""
-                    );
+                    direction.destination || "";
 
 
                 // -------------------------------------------------
-                // ZKRÁCENÝ SPOJ S
+                // ZKRÁCENÝ SPOJ
                 // -------------------------------------------------
 
                 if (parsed.isShortTrip) {
 
-                    const shortStopIndex =
-                        stopNames.findIndex(
+                    const shortIndex =
+                        direction.stops.findIndex(
                             stop =>
                                 normalizeStop(stop) ===
                                 normalizeStop(
@@ -367,27 +300,23 @@ window.searchTimetable = (() => {
                                 )
                         );
 
-                    if (
-                        shortStopIndex !== -1
-                    ) {
+                    if (shortIndex !== -1) {
 
                         stopCount =
-                            shortStopIndex + 1;
+                            shortIndex + 1;
 
                         destination =
-                            stopNames[
-                                shortStopIndex
-                            ];
+                            "Sminov, u lávky";
                     }
                 }
+
+
+                const stops = [];
 
 
                 // -------------------------------------------------
                 // ZASTÁVKY
                 // -------------------------------------------------
-
-                const stops = [];
-
 
                 for (
                     let i = 0;
@@ -395,8 +324,8 @@ window.searchTimetable = (() => {
                     i++
                 ) {
 
-                    const stopName =
-                        stopNames[i];
+                    const name =
+                        direction.stops[i];
 
                     const travelTime =
                         Number(
@@ -404,7 +333,7 @@ window.searchTimetable = (() => {
                         );
 
                     if (
-                        !stopName ||
+                        !name ||
                         !Number.isFinite(
                             travelTime
                         )
@@ -412,24 +341,21 @@ window.searchTimetable = (() => {
                         continue;
                     }
 
-
-                    const absoluteTime =
-                        firstTime +
+                    const absoluteMinutes =
+                        startTime +
                         travelTime;
-
 
                     stops.push({
 
-                        name:
-                            stopName,
+                        name,
 
                         time:
                             minutesToTime(
-                                absoluteTime
+                                absoluteMinutes
                             ),
 
                         minutes:
-                            absoluteTime,
+                            absoluteMinutes,
 
                         index:
                             i
@@ -437,32 +363,26 @@ window.searchTimetable = (() => {
                 }
 
 
-                if (
-                    stops.length < 2
-                ) {
+                if (stops.length < 2) {
                     continue;
                 }
 
 
                 // -------------------------------------------------
-                // JEDINEČNÉ ID SPOJE
+                // UNIKÁTNÍ ID JÍZDY
                 // -------------------------------------------------
 
-                const tripId = [
-
-                    String(line),
-
-                    `direction-${directionIndex}`,
-
-                    firstTime,
-
-                    parsed.isShortTrip
-                        ? "S"
-                        : "N",
-
-                    departureIndex
-
-                ].join("-");
+                const tripId =
+                    [
+                        String(line),
+                        String(
+                            direction.id ?? destination
+                        ),
+                        startTime,
+                        parsed.isShortTrip
+                            ? "S"
+                            : "N"
+                    ].join("|");
 
 
                 trips.push({
@@ -474,29 +394,25 @@ window.searchTimetable = (() => {
                         String(line),
 
                     directionId:
-                        direction.id ??
-                        `direction-${directionIndex}`,
+                        direction.id ?? "",
 
-                    destination:
-                        destination,
+                    destination,
 
                     isShortTrip:
                         parsed.isShortTrip,
 
-                    stops:
-                        stops
+                    stops
                 });
             }
         }
-
 
         return trips;
     }
 
 
-    // =====================================================
-    // VŠECHNY SPOJE LINKY
-    // =====================================================
+    // =========================================================
+    // VŠECHNY JÍZDY LINKY
+    // =========================================================
 
     async function getTrips(
         line,
@@ -508,7 +424,6 @@ window.searchTimetable = (() => {
 
         const trips = [];
 
-
         if (
             !timetable ||
             !Array.isArray(
@@ -518,63 +433,40 @@ window.searchTimetable = (() => {
             return trips;
         }
 
-
         for (
-            let i = 0;
-            i < timetable.directions.length;
-            i++
+            const direction
+            of timetable.directions
         ) {
-
-            const direction =
-                timetable.directions[i];
 
             trips.push(
                 ...createTrips(
                     line,
                     direction,
-                    i,
                     dayType
                 )
             );
         }
 
-
         return trips;
     }
 
 
-    // =====================================================
-    // NAČTENÍ VŠECH LINEK
-    // =====================================================
+    // =========================================================
+    // VŠECHNY LINKY
+    // =========================================================
 
     async function loadAllTrips(
         lineNumbers,
         dayType
     ) {
 
-        if (
-            !Array.isArray(lineNumbers) ||
-            lineNumbers.length === 0
-        ) {
+        if (!Array.isArray(lineNumbers)) {
             return [];
         }
 
-
-        // Odstranění duplicitních čísel linek
-        const uniqueLines =
-            [
-                ...new Set(
-                    lineNumbers.map(
-                        line =>
-                            String(line).trim()
-                    )
-                )
-            ];
-
-
         const results =
             await Promise.all(
-                uniqueLines.map(
+                lineNumbers.map(
                     async line => {
 
                         try {
@@ -600,24 +492,19 @@ window.searchTimetable = (() => {
 
         const allTrips = [];
 
-
         for (
-            const trips of results
+            const trips
+            of results
         ) {
 
-            if (
-                Array.isArray(trips)
-            ) {
-
-                allTrips.push(
-                    ...trips
-                );
-            }
+            allTrips.push(
+                ...trips
+            );
         }
 
 
         console.log(
-            "Načtené spoje:",
+            "NAČTENÉ JÍZDY:",
             allTrips.length
         );
 
@@ -626,247 +513,112 @@ window.searchTimetable = (() => {
     }
 
 
-    // =====================================================
-    // ÚSEK SPOJE
-    // =====================================================
+    // =========================================================
+    // NAJDI ZASTÁVKU V JÍZDĚ
+    // =========================================================
+
+    function findStopIndex(
+        trip,
+        stopName,
+        startIndex = 0
+    ) {
+
+        const wanted =
+            normalizeStop(
+                stopName
+            );
+
+        for (
+            let i = startIndex;
+            i < trip.stops.length;
+            i++
+        ) {
+
+            if (
+                normalizeStop(
+                    trip.stops[i].name
+                ) === wanted
+            ) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+
+    // =========================================================
+    // SEGMENT
+    // =========================================================
 
     function getSegment(
         trip,
         from,
-        to
+        to,
+        startIndex = 0
     ) {
-
-        if (
-            !trip ||
-            !Array.isArray(
-                trip.stops
-            )
-        ) {
-            return null;
-        }
-
-
-        const fromKey =
-            normalizeStop(from);
-
-        const toKey =
-            normalizeStop(to);
-
 
         const fromIndex =
-            trip.stops.findIndex(
-                stop =>
-                    normalizeStop(
-                        stop.name
-                    ) === fromKey
-            );
-
-
-        if (
-            fromIndex === -1
-        ) {
-            return null;
-        }
-
-
-        const toIndex =
-            trip.stops.findIndex(
-                (stop, index) =>
-                    index > fromIndex &&
-                    normalizeStop(
-                        stop.name
-                    ) === toKey
-            );
-
-
-        if (
-            toIndex === -1
-        ) {
-            return null;
-        }
-
-
-        const departureStop =
-            trip.stops[fromIndex];
-
-        const arrivalStop =
-            trip.stops[toIndex];
-
-
-        return {
-
-            stops:
-                trip.stops.slice(
-                    fromIndex,
-                    toIndex + 1
-                ),
-
-            departure:
-                departureStop.time,
-
-            departureMinutes:
-                departureStop.minutes,
-
-            arrival:
-                arrivalStop.time,
-
-            arrivalMinutes:
-                arrivalStop.minutes,
-
-            fromIndex:
-                fromIndex,
-
-            toIndex:
-                toIndex
-        };
-    }
-
-
-    // =====================================================
-    // ÚSEK OD KONKRÉTNÍ ZASTÁVKY
-    // =====================================================
-
-    function getSegmentFromIndex(
-        trip,
-        fromIndex,
-        to
-    ) {
-
-        if (
-            !trip ||
-            !Array.isArray(
-                trip.stops
-            )
-        ) {
-            return null;
-        }
-
-
-        if (
-            fromIndex < 0 ||
-            fromIndex >= trip.stops.length
-        ) {
-            return null;
-        }
-
-
-        const toKey =
-            normalizeStop(to);
-
-
-        const toIndex =
-            trip.stops.findIndex(
-                (stop, index) =>
-                    index > fromIndex &&
-                    normalizeStop(
-                        stop.name
-                    ) === toKey
-            );
-
-
-        if (
-            toIndex === -1
-        ) {
-            return null;
-        }
-
-
-        const departureStop =
-            trip.stops[fromIndex];
-
-        const arrivalStop =
-            trip.stops[toIndex];
-
-
-        if (
-            !departureStop ||
-            !arrivalStop
-        ) {
-            return null;
-        }
-
-
-        return {
-
-            stops:
-                trip.stops.slice(
-                    fromIndex,
-                    toIndex + 1
-                ),
-
-            departure:
-                departureStop.time,
-
-            departureMinutes:
-                departureStop.minutes,
-
-            arrival:
-                arrivalStop.time,
-
-            arrivalMinutes:
-                arrivalStop.minutes,
-
-            fromIndex:
-                fromIndex,
-
-            toIndex:
-                toIndex
-        };
-    }
-
-
-    // =====================================================
-    // VYTVOŘENÍ LEGU
-    // =====================================================
-
-    function makeLeg(
-        trip,
-        segment,
-        from,
-        to
-    ) {
-
-        return {
-
-            line:
-                trip.line,
-
-            directionId:
-                trip.directionId,
-
-            destination:
-                trip.destination,
-
-            isShortTrip:
-                trip.isShortTrip,
-
-            from:
+            findStopIndex(
+                trip,
                 from,
+                startIndex
+            );
 
-            to:
+        if (fromIndex === -1) {
+            return null;
+        }
+
+
+        const toIndex =
+            findStopIndex(
+                trip,
                 to,
+                fromIndex + 1
+            );
 
-            departure:
-                segment.departure,
+        if (toIndex === -1) {
+            return null;
+        }
 
-            arrival:
-                segment.arrival,
 
-            departureMinutes:
-                segment.departureMinutes,
+        const departureStop =
+            trip.stops[fromIndex];
 
-            arrivalMinutes:
-                segment.arrivalMinutes,
+        const arrivalStop =
+            trip.stops[toIndex];
+
+
+        return {
+
+            fromIndex,
+
+            toIndex,
 
             stops:
-                segment.stops
+                trip.stops.slice(
+                    fromIndex,
+                    toIndex + 1
+                ),
+
+            departure:
+                departureStop.time,
+
+            departureMinutes:
+                departureStop.minutes,
+
+            arrival:
+                arrivalStop.time,
+
+            arrivalMinutes:
+                arrivalStop.minutes
         };
     }
 
 
-    // =====================================================
+    // =========================================================
     // PŘÍMÉ SPOJE
-    // =====================================================
+    // =========================================================
 
     function findDirectConnections(
         allTrips,
@@ -878,9 +630,9 @@ window.searchTimetable = (() => {
 
         const results = [];
 
-
         for (
-            const trip of allTrips
+            const trip
+            of allTrips
         ) {
 
             const segment =
@@ -889,7 +641,6 @@ window.searchTimetable = (() => {
                     from,
                     to
                 );
-
 
             if (!segment) {
                 continue;
@@ -931,11 +682,9 @@ window.searchTimetable = (() => {
                 isShortTrip:
                     trip.isShortTrip,
 
-                from:
-                    from,
+                from,
 
-                to:
-                    to,
+                to,
 
                 departure:
                     segment.departure,
@@ -962,12 +711,12 @@ window.searchTimetable = (() => {
     }
 
 
-    // =====================================================
+    // =========================================================
     // INDEX ZASTÁVEK
-    // =====================================================
+    // =========================================================
 
     function buildStopIndex(
-        trips
+        allTrips
     ) {
 
         const index =
@@ -975,18 +724,9 @@ window.searchTimetable = (() => {
 
 
         for (
-            const trip of trips
+            const trip
+            of allTrips
         ) {
-
-            if (
-                !trip ||
-                !Array.isArray(
-                    trip.stops
-                )
-            ) {
-                continue;
-            }
-
 
             for (
                 let i = 0;
@@ -997,19 +737,10 @@ window.searchTimetable = (() => {
                 const stop =
                     trip.stops[i];
 
-                if (
-                    !stop ||
-                    !stop.name
-                ) {
-                    continue;
-                }
-
-
                 const key =
                     normalizeStop(
                         stop.name
                     );
-
 
                 if (!index.has(key)) {
 
@@ -1022,11 +753,9 @@ window.searchTimetable = (() => {
 
                 index.get(key).push({
 
-                    trip:
-                        trip,
+                    trip,
 
-                    index:
-                        i
+                    index: i
                 });
             }
         }
@@ -1036,105 +765,67 @@ window.searchTimetable = (() => {
     }
 
 
-    // =====================================================
-    // VYTVOŘENÍ JEDINEČNÉHO KLÍČE CESTY
-    // =====================================================
+    // =========================================================
+    // VYTVOŘENÍ LEGU
+    // =========================================================
 
-    function journeyKey(
-        journey
+    function createLeg(
+        trip,
+        segment,
+        from,
+        to
     ) {
 
-        if (
-            !journey ||
-            !Array.isArray(
-                journey.legs
-            )
-        ) {
-            return "";
-        }
+        return {
 
+            line:
+                trip.line,
 
-        return journey.legs
-            .map(
-                leg =>
-                    [
-                        leg.line,
-                        leg.directionId,
-                        leg.departure,
-                        leg.arrival,
-                        normalizeStop(leg.from),
-                        normalizeStop(leg.to)
-                    ].join(":")
-            )
-            .join("|");
+            directionId:
+                trip.directionId,
+
+            destination:
+                trip.destination,
+
+            isShortTrip:
+                trip.isShortTrip,
+
+            from,
+
+            to,
+
+            departure:
+                segment.departure,
+
+            arrival:
+                segment.arrival,
+
+            departureMinutes:
+                segment.departureMinutes,
+
+            arrivalMinutes:
+                segment.arrivalMinutes,
+
+            stops:
+                segment.stops,
+
+            tripId:
+                trip.id
+        };
     }
 
 
-    // =====================================================
-    // ODSTRANĚNÍ DUPLICIT
-    // =====================================================
-
-    function removeDuplicateJourneys(
-        journeys
-    ) {
-
-        const seen =
-            new Set();
-
-        const result = [];
-
-
-        for (
-            const journey of journeys
-        ) {
-
-            const key =
-                journeyKey(
-                    journey
-                );
-
-
-            if (!key) {
-                continue;
-            }
-
-
-            if (
-                seen.has(key)
-            ) {
-                continue;
-            }
-
-
-            seen.add(key);
-
-            result.push(
-                journey
-            );
-        }
-
-
-        return result;
-    }
-
-
-    // =====================================================
+    // =========================================================
     // SKÓRE SPOJE
-    //
-    // Nejprve je důležitý čas příjezdu.
-    // Potom počet přestupů.
-    // Potom čekání.
-    // =====================================================
+    // =========================================================
 
-    function getJourneyScore(
+    function journeyScore(
         journey
     ) {
 
         if (
             !journey ||
-            !Array.isArray(
-                journey.legs
-            ) ||
+            !journey.legs ||
             journey.legs.length === 0
         ) {
             return Infinity;
@@ -1154,47 +845,38 @@ window.searchTimetable = (() => {
             journey.legs.length - 1;
 
 
-        const totalWaiting =
-            Number(
-                journey.totalWaiting
-            ) || 0;
-
-
         const totalTravel =
             last.arrivalMinutes -
             first.departureMinutes;
 
 
+        const waiting =
+            Number(
+                journey.totalWaiting || 0
+            );
+
+
         /*
          * Hlavní priorita:
-         * nejdřívější příjezd.
          *
-         * Potom:
-         * méně přestupů.
-         *
-         * Potom:
-         * méně čekání.
-         *
-         * Potom:
-         * kratší cesta.
+         * 1. co nejdřívější příjezd
+         * 2. méně přestupů
+         * 3. kratší čekání
+         * 4. kratší celková cesta
          */
 
         return (
-
             last.arrivalMinutes * 1000000 +
-
             transfers * 10000 +
-
-            totalWaiting * 10 +
-
+            waiting * 10 +
             totalTravel
         );
     }
 
 
-    // =====================================================
+    // =========================================================
     // PŘESTUPNÍ SPOJE
-    // =====================================================
+    // =========================================================
 
     function findTransferConnections(
         allTrips,
@@ -1205,11 +887,7 @@ window.searchTimetable = (() => {
 
         const results = [];
 
-
-        if (
-            !Array.isArray(allTrips) ||
-            allTrips.length === 0
-        ) {
+        if (!allTrips.length) {
             return results;
         }
 
@@ -1220,19 +898,13 @@ window.searchTimetable = (() => {
             );
 
 
-        const startKey =
-            normalizeStop(from);
-
-
-        const startOccurrences =
+        const starting =
             stopIndex.get(
-                startKey
+                normalizeStop(from)
             ) || [];
 
 
-        if (
-            startOccurrences.length === 0
-        ) {
+        if (!starting.length) {
             return results;
         }
 
@@ -1240,31 +912,23 @@ window.searchTimetable = (() => {
         const queue = [];
 
 
-        // =================================================
+        // =====================================================
         // START
-        // =================================================
+        // =====================================================
 
         for (
             const occurrence
-            of startOccurrences
+            of starting
         ) {
 
             const trip =
                 occurrence.trip;
 
-            const stopIndexInTrip =
+            const index =
                 occurrence.index;
 
-
             const stop =
-                trip.stops[
-                    stopIndexInTrip
-                ];
-
-
-            if (!stop) {
-                continue;
-            }
+                trip.stops[index];
 
 
             if (
@@ -1275,43 +939,19 @@ window.searchTimetable = (() => {
             }
 
 
-            // Pokud tento spoj jede rovnou do cíle,
-            // řeší ho findDirectConnections.
-            const direct =
-                getSegmentFromIndex(
-                    trip,
-                    stopIndexInTrip,
-                    to
-                );
-
-
-            if (direct) {
-                continue;
-            }
-
-
             queue.push({
 
-                trip:
-                    trip,
+                trip,
 
-                stop:
-                    stop.name,
+                index,
 
-                stopIndex:
-                    stopIndexInTrip,
+                from,
 
-                legs:
-                    [],
+                legs: [],
 
-                departureMinutes:
-                    stop.minutes,
+                transfers: 0,
 
-                totalWaiting:
-                    0,
-
-                transfers:
-                    0,
+                totalWaiting: 0,
 
                 visitedTrips:
                     new Set([
@@ -1321,67 +961,61 @@ window.searchTimetable = (() => {
         }
 
 
-        let processedStates = 0;
+        let states = 0;
 
 
-        // =================================================
-        // PROHLEDÁVÁNÍ
-        // =================================================
+        // =====================================================
+        // BFS
+        // =====================================================
 
         while (
             queue.length > 0 &&
-            processedStates < MAX_STATES
+            states < MAX_STATES
         ) {
 
             const state =
                 queue.shift();
 
+            states++;
 
-            processedStates++;
+
+            const trip =
+                state.trip;
 
 
-            if (
-                !state ||
-                !state.trip ||
-                !Array.isArray(
-                    state.trip.stops
-                )
-            ) {
+            const startIndex =
+                state.index;
+
+
+            const startStop =
+                trip.stops[
+                    startIndex
+                ];
+
+
+            if (!startStop) {
                 continue;
             }
 
 
-            const currentTrip =
-                state.trip;
-
-
-            const currentIndex =
-                state.stopIndex;
-
-
-            // ---------------------------------------------
-            // PROCHÁZÍME DALŠÍ ZASTÁVKY
-            // ---------------------------------------------
+            // -------------------------------------------------
+            // PROJDEME VŠECHNY DALŠÍ ZASTÁVKY
+            // -------------------------------------------------
 
             for (
                 let transferIndex =
-                    currentIndex + 1;
+                    startIndex + 1;
 
                 transferIndex <
-                currentTrip.stops.length;
+                trip.stops.length;
 
                 transferIndex++
             ) {
 
                 const transferStop =
-                    currentTrip.stops[
+                    trip.stops[
                         transferIndex
                     ];
-
-
-                if (!transferStop) {
-                    continue;
-                }
 
 
                 const transferName =
@@ -1392,11 +1026,7 @@ window.searchTimetable = (() => {
                     transferStop.minutes;
 
 
-                // ---------------------------------------------
-                // NAJDEME VŠECHNY SPOJE V TÉTO ZASTÁVCE
-                // ---------------------------------------------
-
-                const occurrences =
+                const possibleTrips =
                     stopIndex.get(
                         normalizeStop(
                             transferName
@@ -1404,36 +1034,22 @@ window.searchTimetable = (() => {
                     ) || [];
 
 
+                // -------------------------------------------------
+                // HLEDÁME DALŠÍ SPOJ
+                // -------------------------------------------------
+
                 for (
                     const occurrence
-                    of occurrences
+                    of possibleTrips
                 ) {
 
                     const nextTrip =
                         occurrence.trip;
 
-
                     const nextIndex =
                         occurrence.index;
 
 
-                    if (
-                        !nextTrip
-                    ) {
-                        continue;
-                    }
-
-
-                    // Stejný spoj nemá smysl
-                    if (
-                        nextTrip.id ===
-                        currentTrip.id
-                    ) {
-                        continue;
-                    }
-
-
-                    // Cyklus
                     if (
                         state.visitedTrips.has(
                             nextTrip.id
@@ -1458,43 +1074,58 @@ window.searchTimetable = (() => {
                         nextStop.minutes;
 
 
-                    // ---------------------------------------------
+                    // -------------------------------------------------
                     // ČAS NA PŘESTUP
-                    // ---------------------------------------------
-
-                    const waiting =
-                        nextDeparture -
-                        arrivalAtTransfer;
-
+                    // -------------------------------------------------
 
                     if (
-                        waiting <
+                        nextDeparture <
+                        arrivalAtTransfer +
                         MIN_TRANSFER_TIME
                     ) {
                         continue;
                     }
 
 
-                    // ---------------------------------------------
-                    // NOVÝ LEG
-                    // ---------------------------------------------
+                    // -------------------------------------------------
+                    // ÚSEK NOVOU LINKOU DO CÍLE
+                    // -------------------------------------------------
+
+                    const finalSegment =
+                        getSegment(
+                            nextTrip,
+                            transferName,
+                            to,
+                            nextIndex
+                        );
+
+
+                    // -------------------------------------------------
+                    // AKTUÁLNÍ LEG
+                    // -------------------------------------------------
 
                     const currentSegment = {
 
+                        fromIndex:
+                            startIndex,
+
+                        toIndex:
+                            transferIndex,
+
                         stops:
-                            currentTrip.stops.slice(
-                                currentIndex,
+                            trip.stops.slice(
+                                startIndex,
                                 transferIndex + 1
                             ),
 
                         departure:
-                            currentTrip.stops[
-                                currentIndex
+                            trip.stops[
+                                startIndex
                             ].time,
 
                         departureMinutes:
-                            currentTrip.stops[
-                                currentIndex
+                            trip.stops[
+                                startIndex
                             ].minutes,
 
                         arrival:
@@ -1506,39 +1137,29 @@ window.searchTimetable = (() => {
 
 
                     const currentLeg =
-                        makeLeg(
-                            currentTrip,
+                        createLeg(
+                            trip,
                             currentSegment,
-                            state.stop,
+                            state.from,
                             transferName
                         );
 
 
-                    const newLegs =
+                    const legs =
                         [
                             ...state.legs,
                             currentLeg
                         ];
 
 
-                    // ---------------------------------------------
-                    // ZKONTROLUJEME CÍL
-                    // ---------------------------------------------
+                    // =================================================
+                    // CÍL
+                    // =================================================
 
-                    const finalSegment =
-                        getSegmentFromIndex(
-                            nextTrip,
-                            nextIndex,
-                            to
-                        );
-
-
-                    if (
-                        finalSegment
-                    ) {
+                    if (finalSegment) {
 
                         const finalLeg =
-                            makeLeg(
+                            createLeg(
                                 nextTrip,
                                 finalSegment,
                                 transferName,
@@ -1546,11 +1167,19 @@ window.searchTimetable = (() => {
                             );
 
 
-                        const completeLegs =
+                        const complete =
                             [
-                                ...newLegs,
+                                ...legs,
                                 finalLeg
                             ];
+
+
+                        // !!! DŮLEŽITÉ !!!
+                        // waiting je vytvořeno PŘED použitím.
+
+                        const waiting =
+                            nextDeparture -
+                            arrivalAtTransfer;
 
 
                         const journey = {
@@ -1559,20 +1188,20 @@ window.searchTimetable = (() => {
                                 "transfer",
 
                             legs:
-                                completeLegs,
+                                complete,
 
                             transfers:
-                                completeLegs.length - 1,
+                                complete.length - 1,
 
                             departure:
-                                completeLegs[0]
+                                complete[0]
                                     .departure,
 
                             arrival:
                                 finalLeg.arrival,
 
                             departureMinutes:
-                                completeLegs[0]
+                                complete[0]
                                     .departureMinutes,
 
                             arrivalMinutes:
@@ -1580,14 +1209,11 @@ window.searchTimetable = (() => {
                                     .arrivalMinutes,
 
                             totalWaiting:
-                                (
-                                    Number(
-                                        state.totalWaiting
-                                    ) || 0
-                                ) + waiting,
+                                state.totalWaiting +
+                                waiting,
 
                             transferStops:
-                                completeLegs
+                                complete
                                     .slice(0, -1)
                                     .map(
                                         leg =>
@@ -1601,39 +1227,36 @@ window.searchTimetable = (() => {
                         );
 
 
-                        // Tento konkrétní přestup jsme našli.
-                        // Není potřeba pokračovat z něj
-                        // do dalších přestupů, pokud by
-                        // už byl horší.
                         continue;
                     }
 
 
-                    // ---------------------------------------------
-                    // MAXIMÁLNĚ 4 PŘESTUPY
-                    // ---------------------------------------------
-
-                    const newTransfers =
-                        state.transfers + 1;
-
+                    // =================================================
+                    // DALŠÍ PŘESTUP
+                    // =================================================
 
                     if (
-                        newTransfers >=
-                        MAX_TRANSFERS
+                        state.transfers >=
+                        MAX_TRANSFERS - 1
                     ) {
                         continue;
                     }
 
 
-                    const visitedTrips =
+                    const visited =
                         new Set(
                             state.visitedTrips
                         );
 
 
-                    visitedTrips.add(
+                    visited.add(
                         nextTrip.id
                     );
+
+
+                    const waiting =
+                        nextDeparture -
+                        arrivalAtTransfer;
 
 
                     queue.push({
@@ -1641,30 +1264,23 @@ window.searchTimetable = (() => {
                         trip:
                             nextTrip,
 
-                        stop:
-                            transferName,
-
-                        stopIndex:
+                        index:
                             nextIndex,
 
-                        legs:
-                            newLegs,
+                        from:
+                            transferName,
 
-                        departureMinutes:
-                            state.departureMinutes,
-
-                        totalWaiting:
-                            (
-                                Number(
-                                    state.totalWaiting
-                                ) || 0
-                            ) + waiting,
+                        legs,
 
                         transfers:
-                            newTransfers,
+                            state.transfers + 1,
+
+                        totalWaiting:
+                            state.totalWaiting +
+                            waiting,
 
                         visitedTrips:
-                            visitedTrips
+                            visited
                     });
                 }
             }
@@ -1672,55 +1288,35 @@ window.searchTimetable = (() => {
 
 
         console.log(
-            "Prozkoumaných stavů:",
-            processedStates
+            "PROZKOUMANÝCH STAVŮ:",
+            states
         );
 
 
-        return removeDuplicateJourneys(
-            results
-        );
+        return results;
     }
 
 
-    // =====================================================
-    // VÝBĚR NEJLEPŠÍCH VÝSLEDKŮ
-    // =====================================================
+    // =========================================================
+    // ODSTRANĚNÍ DUPLICIT
+    // =========================================================
 
-    function selectBestConnections(
-        direct,
-        transfers,
-        mode
+    function removeDuplicates(
+        connections
     ) {
-
-        const all = [
-            ...direct,
-            ...transfers
-        ];
-
-
-        if (all.length === 0) {
-            return [];
-        }
-
-
-        const unique =
-            [];
-
 
         const seen =
             new Set();
 
+        const result = [];
 
-        // ---------------------------------------------
-        // DEDUPLICITA
-        // ---------------------------------------------
 
         for (
-            const connection of all
+            const connection
+            of connections
         ) {
 
-            let key = "";
+            let key;
 
 
             if (
@@ -1729,33 +1325,25 @@ window.searchTimetable = (() => {
             ) {
 
                 key =
-                    journeyKey(
-                        connection
-                    );
+                    connection.legs
+                        .map(
+                            leg =>
+                                leg.tripId +
+                                "|" +
+                                leg.from +
+                                "|" +
+                                leg.to
+                        )
+                        .join(">>");
 
             } else {
 
-                key = [
-
-                    "direct",
-
-                    connection.line,
-
-                    connection.directionId,
-
-                    connection.departure,
-
-                    connection.arrival,
-
-                    normalizeStop(
-                        connection.from
-                    ),
-
-                    normalizeStop(
+                key =
+                    [
+                        connection.tripId,
+                        connection.from,
                         connection.to
-                    )
-
-                ].join("|");
+                    ].join("|");
             }
 
 
@@ -1768,153 +1356,19 @@ window.searchTimetable = (() => {
 
             seen.add(key);
 
-            unique.push(
+            result.push(
                 connection
             );
         }
 
 
-        // ---------------------------------------------
-        // ODJEZD
-        // ---------------------------------------------
-
-        if (
-            mode === "departure"
-        ) {
-
-            unique.sort(
-                (a, b) => {
-
-                    const aDeparture =
-                        Number(
-                            a.departureMinutes
-                        );
-
-                    const bDeparture =
-                        Number(
-                            b.departureMinutes
-                        );
-
-
-                    if (
-                        aDeparture !==
-                        bDeparture
-                    ) {
-
-                        return (
-                            aDeparture -
-                            bDeparture
-                        );
-                    }
-
-
-                    const aArrival =
-                        Number(
-                            a.arrivalMinutes
-                        );
-
-                    const bArrival =
-                        Number(
-                            b.arrivalMinutes
-                        );
-
-
-                    if (
-                        aArrival !==
-                        bArrival
-                    ) {
-
-                        return (
-                            aArrival -
-                            bArrival
-                        );
-                    }
-
-
-                    const aTransfers =
-                        a.type === "transfer"
-                            ? a.transfers
-                            : 0;
-
-                    const bTransfers =
-                        b.type === "transfer"
-                            ? b.transfers
-                            : 0;
-
-
-                    return (
-                        aTransfers -
-                        bTransfers
-                    );
-                }
-            );
-
-        } else {
-
-            // ---------------------------------------------
-            // PŘÍJEZD
-            // ---------------------------------------------
-
-            unique.sort(
-                (a, b) => {
-
-                    const aArrival =
-                        Number(
-                            a.arrivalMinutes
-                        );
-
-                    const bArrival =
-                        Number(
-                            b.arrivalMinutes
-                        );
-
-
-                    if (
-                        aArrival !==
-                        bArrival
-                    ) {
-
-                        return (
-                            aArrival -
-                            bArrival
-                        );
-                    }
-
-
-                    const aTransfers =
-                        a.type === "transfer"
-                            ? a.transfers
-                            : 0;
-
-                    const bTransfers =
-                        b.type === "transfer"
-                            ? b.transfers
-                            : 0;
-
-
-                    return (
-                        aTransfers -
-                        bTransfers
-                    );
-                }
-            );
-        }
-
-
-        // ---------------------------------------------
-        // NEJLEPŠÍ SPOJE
-        // ---------------------------------------------
-
-        return unique.slice(
-            0,
-            MAX_RESULTS
-        );
+        return result;
     }
 
 
-    // =====================================================
+    // =========================================================
     // HLAVNÍ VYHLEDÁVÁNÍ
-    // =====================================================
+    // =========================================================
 
     async function findConnections(
         from,
@@ -1926,39 +1380,20 @@ window.searchTimetable = (() => {
     ) {
 
         console.log(
-            "================================="
-        );
-
-        console.log(
             "VYHLEDÁVÁNÍ:",
             from,
             "→",
-            to
-        );
-
-        console.log(
-            "ČAS:",
-            afterTime
-        );
-
-        console.log(
-            "DEN:",
+            to,
+            afterTime,
             dayType
         );
 
-        console.log(
-            "LINKY:",
-            lineNumbers
-        );
-
-
-        // ---------------------------------------------
-        // KONTROLA
-        // ---------------------------------------------
 
         if (
             !from ||
-            !to
+            !to ||
+            !Array.isArray(lineNumbers) ||
+            lineNumbers.length === 0
         ) {
             return [];
         }
@@ -1972,37 +1407,15 @@ window.searchTimetable = (() => {
         }
 
 
-        if (
-            !Array.isArray(
-                lineNumbers
-            ) ||
-            lineNumbers.length === 0
-        ) {
-            return [];
-        }
-
-
         const wantedTime =
             timeToMinutes(
                 afterTime
             );
 
 
-        if (
-            !Number.isFinite(
-                wantedTime
-            )
-        ) {
-
-            throw new Error(
-                `Neplatný čas: ${afterTime}`
-            );
-        }
-
-
-        // ---------------------------------------------
-        // NAČTENÍ VŠECH LINEK
-        // ---------------------------------------------
+        // =====================================================
+        // NAČTENÍ VŠECH JÍZD
+        // =====================================================
 
         const allTrips =
             await loadAllTrips(
@@ -2011,17 +1424,9 @@ window.searchTimetable = (() => {
             );
 
 
-        console.log(
-            "CELKEM SPOJŮ:",
-            allTrips.length
-        );
+        if (!allTrips.length) {
 
-
-        if (
-            allTrips.length === 0
-        ) {
-
-            console.error(
+            console.warn(
                 "Nebyly načteny žádné spoje."
             );
 
@@ -2029,11 +1434,11 @@ window.searchTimetable = (() => {
         }
 
 
-        // ---------------------------------------------
+        // =====================================================
         // PŘÍMÉ SPOJE
-        // ---------------------------------------------
+        // =====================================================
 
-        const direct =
+        let direct =
             findDirectConnections(
                 allTrips,
                 from,
@@ -2043,15 +1448,9 @@ window.searchTimetable = (() => {
             );
 
 
-        console.log(
-            "PŘÍMÉ SPOJE:",
-            direct.length
-        );
-
-
-        // ---------------------------------------------
-        // PŘESTUPNÍ SPOJE
-        // ---------------------------------------------
+        // =====================================================
+        // PŘESTUPY
+        // =====================================================
 
         let transfers = [];
 
@@ -2070,42 +1469,119 @@ window.searchTimetable = (() => {
         }
 
 
-        console.log(
-            "PŘESTUPNÍ SPOJE:",
-            transfers.length
-        );
+        // =====================================================
+        // SPOJENÍ
+        // =====================================================
+
+        let connections =
+            [
+                ...direct,
+                ...transfers
+            ];
 
 
-        // ---------------------------------------------
-        // VŠECHNY VÝSLEDKY
-        // ---------------------------------------------
+        // =====================================================
+        // DUPLICITY
+        // =====================================================
 
-        const result =
-            selectBestConnections(
-                direct,
-                transfers,
-                mode
+        connections =
+            removeDuplicates(
+                connections
+            );
+
+
+        // =====================================================
+        // SEŘAZENÍ
+        // =====================================================
+
+        if (
+            mode === "departure"
+        ) {
+
+            connections.sort(
+                (a, b) => {
+
+                    const aScore =
+                        journeyScore(
+                            a.type === "transfer"
+                                ? a
+                                : {
+                                    legs: [
+                                        {
+                                            departureMinutes:
+                                                a.departureMinutes,
+
+                                            arrivalMinutes:
+                                                a.arrivalMinutes
+                                        }
+                                    ],
+
+                                    totalWaiting: 0
+                                }
+                        );
+
+
+                    const bScore =
+                        journeyScore(
+                            b.type === "transfer"
+                                ? b
+                                : {
+                                    legs: [
+                                        {
+                                            departureMinutes:
+                                                b.departureMinutes,
+
+                                            arrivalMinutes:
+                                                b.arrivalMinutes
+                                        }
+                                    ],
+
+                                    totalWaiting: 0
+                                }
+                        );
+
+
+                    return (
+                        aScore -
+                        bScore
+                    );
+                }
+            );
+
+        } else {
+
+            connections.sort(
+                (a, b) =>
+                    a.arrivalMinutes -
+                    b.arrivalMinutes
+            );
+        }
+
+
+        // =====================================================
+        // VÝSLEDKY
+        // =====================================================
+
+        const finalResults =
+            connections.slice(
+                0,
+                MAX_RESULTS
             );
 
 
         console.log(
-            "VÝSLEDKY:",
-            result
+            "NALEZENÉ SPOJE:",
+            finalResults
         );
 
 
-        console.log(
-            "================================="
-        );
-
-
-        return result;
+        return finalResults;
     }
 
 
-    // =====================================================
+    // =========================================================
     // EXPORT
-    // =====================================================
+    // =========================================================
 
     return {
 
